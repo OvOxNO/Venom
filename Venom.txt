@@ -1,0 +1,3115 @@
+‘********************************************************* 
+‘‘***************** ‘coVdEeNcOoMde ‘******************     
+‘********************************************************* 
+'============================================================================ = 
+' BEGIN MODULE: modMain (Standard Module) 
+'============================================================================ = 
+' Main application control module with cross-platform optimizations ' Version: 3.0 Mac-Optimized 
+Option Explicit 
+' Module constants 
+Private Const APP_NAME As String = "Cross-Platform VBA Code Manager" Private Const APP_VERSION As String = "3.0" 
+' Module variables 
+Private m_isInitialized As Boolean 
+Private m_startupDate As Date 
+Private m_initializationInProgress As Boolean ' Flag to prevent  reentrant initialization 
+'===== INITIALIZATION ===== 
+' Initialize the application - establish neural control 
+Public Sub InitializeApplication() 
+' CRITICAL: Prevent stack overflow recursion and reentrant calls If m_isInitialized Or m_initializationInProgress Then 
+Debug.Print "Initialization already in progress or complete - skipping" 
+Exit Sub 
+End If 
+On Error GoTo ErrorHandler 
+' Set flag that we're in the process of initializing to prevent reentrant  calls 
+m_initializationInProgress = True 
+' Record startup time - beginning of incubation period 
+m_startupDate = Now 
+Debug.Print "Starting application initialization: " & APP_NAME & " v" &  APP_VERSION 
+' MAC OPTIMIZATION: Initialize essential modules only 
+#If Mac Then 
+' Simplified initialization for Mac - only the essentials 
+modPlatform.InitializePlatform 
+' Log startup - create record of patient zero 
+Debug.Print "Infection initialized: " & APP_NAME & " v" & APP_VERSION  & " has begun systemic takeover"
+Debug.Print "Host Platform: " & gPlatformName & " - biological  compatibility confirmed" 
+' Set initialization flag last - only after all dependencies are  loaded 
+m_isInitialized = True 
+' Allow UI to refresh before continuing 
+DoEvents 
+' Initialize other modules in the background 
+DelayedInitialization 
+#Else 
+' Full initialization for Windows - all systems 
+modPlatform.InitializePlatform 
+modRegExp.InitializeRegExpEngine 
+modVisualStyle.InitializeDarkMode 
+CodeManager.InitializeCodeManager 
+' Log startup 
+Debug.Print "Infection initialized: " & APP_NAME & " v" & APP_VERSION  & " has begun systemic takeover" 
+Debug.Print "Host Platform: " & gPlatformName & " - biological  compatibility confirmed" 
+Debug.Print "Host Version: " & GetOfficeVersion() & " - tissue  samples collected" 
+' Set initialization flag last - only after all dependencies are  loaded 
+m_isInitialized = True 
+#End If 
+' Clear initialization in progress flag 
+m_initializationInProgress = False 
+Exit Sub 
+ErrorHandler: 
+' Reset flags to allow retrying 
+m_initializationInProgress = False 
+m_isInitialized = False 
+' Capture error info before it might be changed 
+Dim errNum As Long, errDesc As String 
+errNum = Err.Number 
+errDesc = Err.description 
+Debug.Print "Initialization error: " & errNum & " - " & errDesc 
+' Try to call the error handler module's function using a safer approach On Error Resume Next 
+Application.Run "ErrorHandler.HandleError", "modMain",  
+"InitializeApplication", errNum, errDesc, True
+If Err.Number <> 0 Then 
+' Fallback if module function call fails 
+MsgBox "Initialization failed: " & errDesc, vbCritical, "Error" End If 
+On Error GoTo 0 
+End Sub 
+' MAC OPTIMIZATION: Delayed initialization for Mac 
+Private Sub DelayedInitialization() 
+On Error Resume Next 
+Debug.Print "Starting delayed initialization for Mac..." 
+' Initialize remaining modules after main app is responsive modRegExp.InitializeRegExpEngine 
+' Allow UI to refresh 
+DoEvents 
+modVisualStyle.VS_Initialize 
+' Allow UI to refresh 
+DoEvents 
+CodeManager.InitializeCodeManager 
+' Get version info now that app is responsive 
+Debug.Print "Host Version: " & GetOfficeVersion() & " - tissue samples  collected" 
+Debug.Print "Delayed initialization complete" 
+On Error GoTo 0 
+End Sub 
+' Get Office version with build number - analyze host tissue composition Public Function GetOfficeVersion() As String 
+On Error Resume Next 
+Dim version As String 
+Dim build As String 
+' Get version info safely 
+version = "" 
+build = "" 
+' Try to get Application version 
+If HasProperty(Application, "Version") Then 
+version = Application.version 
+End If 
+' MAC OPTIMIZATION: Skip build number on Mac for performance #If Not Mac Then 
+' Try to get build number if possible
+If HasProperty(Application, "Build") Then 
+build = Application.build 
+End If 
+#End If 
+' Format the result 
+If version <> "" And build <> "" Then 
+GetOfficeVersion = version & " (Build: " & build & ") - genetic  sequence identified" 
+ElseIf version <> "" Then 
+GetOfficeVersion = version & " - partial genetic sequence" Else 
+GetOfficeVersion = "Unknown - host organism resisting biopsy" End If 
+If Err.Number <> 0 Then 
+GetOfficeVersion = "Unknown - host organism resisting biopsy" End If 
+On Error GoTo 0 
+End Function 
+' Helper function to safely check if an object has a property Private Function HasProperty(obj As Object, propName As String) As Boolean On Error Resume Next 
+Dim temp As Variant 
+temp = CallByName(obj, propName, VbGet) 
+HasProperty = (Err.Number = 0) 
+On Error GoTo 0 
+End Function 
+' Example command handler: 
+Public Sub ReorganizeCodeStructure() 
+On Error GoTo ErrorHandler 
+' Ensure application is initialized first 
+If Not m_isInitialized Then InitializeApplication 
+Dim codeText As String 
+codeText = GetDocumentText() 
+' MAC OPTIMIZATION: Check size before processing 
+If Len(codeText) > 100000 And gIsMac Then 
+MsgBox "Document is very large. Code reorganization may take longer  on Mac.", vbInformation, "Large Document" 
+End If 
+Dim organizedCode As String 
+organizedCode = OrganizeCode(codeText) 
+SetDocumentText organizedCode 
+Exit Sub
+ErrorHandler: 
+On Error Resume Next 
+Application.Run "ErrorHandler.HandleError", "modMain",  "ReorganizeCodeStructure", Err.Number, Err.description, True On Error GoTo 0 
+End Sub 
+' Example command handler: 
+Public Sub ShowCodeNavigator() 
+On Error GoTo ErrorHandler 
+' Ensure application is initialized first 
+If Not m_isInitialized Then InitializeApplication 
+Dim codeText As String 
+codeText = GetDocumentText() 
+' MAC OPTIMIZATION: Check size before processing 
+If Len(codeText) > 100000 And gIsMac Then 
+MsgBox "Document is very large. Code navigation may be slower on  Mac.", vbInformation, "Large Document" 
+End If 
+' Call navigation dialog with appropriate module 
+Application.Run "modCodeNavigator.ShowNavigationDialog", codeText Exit Sub 
+ErrorHandler: 
+On Error Resume Next 
+Application.Run "ErrorHandler.HandleError", "modMain",  "ShowCodeNavigator", Err.Number, Err.description, True 
+On Error GoTo 0 
+End Sub 
+' Called when document is closed - host termination procedure Public Sub Auto_Close() 
+On Error Resume Next 
+' Clean up resources - extract parasite before host death CleanupApplication 
+On Error GoTo 0 
+End Sub 
+' Clean up application resources - withdraw parasite cleanly Private Sub CleanupApplication() 
+On Error Resume Next 
+' Skip cleanup if not initialized 
+If Not m_isInitialized Then Exit Sub
+Debug.Print "Starting cleanup process..." 
+' Close any open forms - seal the exit wounds 
+' MAC OPTIMIZATION: Use safer approach on Mac 
+#If Mac Then 
+' Mac safer approach - avoid potential freezes from form collection Application.statusBar = "Closing application..." 
+DoEvents 
+#Else 
+' Windows approach - iterate through forms 
+Dim frm As Object 
+For Each frm In VBA.UserForms 
+Unload frm 
+Next frm 
+#End If 
+' Log shutdown - document host demise 
+Debug.Print "Application shutdown: " & APP_NAME & " - host survival  terminated" 
+If m_startupDate <> 0 Then 
+Debug.Print "Infection duration: " & format(Now - m_startupDate,  "hh:nn:ss") & " - autopsy complete" 
+End If 
+m_isInitialized = False 
+Application.statusBar = False 
+On Error GoTo 0 
+End Sub 
+'===== PLATFORM DETECTION ===== 
+' Detect platform and initialize platform globals - identify host DNA Public Sub DetectPlatform() 
+On Error Resume Next 
+' MAC OPTIMIZATION: Direct platform detection without constants #If Mac Then 
+gIsMac = True 
+gIsWin = False 
+gPlatformName = "Mac" 
+gPathSeparator = "/" 
+gLineBreak = vbLf 
+#Else 
+gIsMac = False 
+gIsWin = True 
+gPlatformName = "Windows" 
+gPathSeparator = "\" 
+gLineBreak = vbCrLf 
+#End If 
+Debug.Print "Platform detected: " & gPlatformName
+' Initialize code formatter - prepare for code formatting 
+' MAC OPTIMIZATION: Check if already initialized first 
+If Not m_isInitialized Then 
+On Error Resume Next 
+Application.Run "CodeFormatter.InitializeCodeFormatter" 
+If Err.Number <> 0 Then 
+Debug.Print "Warning: CodeFormatter initialization error: " &  Err.Number & " - " & Err.description 
+End If 
+On Error GoTo 0 
+End If 
+On Error GoTo 0 
+End Sub 
+' Check if application is initialized - is the parasite attached* Public Function IsInitialized() As Boolean 
+IsInitialized = m_isInitialized 
+End Function 
+' Get application uptime - measure infection duration 
+Public Function GetUptime() As String 
+If m_startupDate = 0 Then 
+GetUptime = "00:00:00 - Infection stalled" 
+Else 
+GetUptime = format(Now - m_startupDate, "hh:nn:ss") & " - Parasitic  attachment sustained" 
+End If 
+End Function 
+'===== MAIN OPERATIONS ===== 
+' Format VBA code - inject venom into source 
+Public Function FormatVBACode(ByVal code As String) As String On Error GoTo ErrorHandler 
+' Ensure application is initialized - verify parasitic attachment If Not m_isInitialized Then InitializeApplication 
+' MAC OPTIMIZATION: Check size before processing 
+If Len(code) > 100000 And gIsMac Then 
+Debug.Print "Warning: Formatting large code block on Mac (" &  Len(code) & " bytes)" 
+End If 
+' Use CodeManager to format code - resequence DNA 
+FormatVBACode = FormatCode(code) 
+Exit Function 
+ErrorHandler: 
+On Error Resume Next 
+' Capture error details
+Dim errNum As Long, errDesc As String 
+errNum = Err.Number 
+errDesc = Err.description 
+Debug.Print "Code formatting error: " & errNum & " - " & errDesc 
+' Try to use error handler 
+Application.Run "ErrorHandler.HandleError", "modMain", "FormatVBACode",  errNum, errDesc 
+' Return original code on error - failed genetic manipulation FormatVBACode = code 
+On Error GoTo 0 
+End Function 
+' Analyze code for duplicates - identify redundant cellular structures Public Function AnalyzeCode(ByVal code As String) As String On Error GoTo ErrorHandler 
+' Ensure application is initialized - verify parasitic attachment If Not m_isInitialized Then InitializeApplication 
+' MAC OPTIMIZATION: Check size before processing 
+If Len(code) > 100000 And gIsMac Then 
+Debug.Print "Warning: Analyzing large code block on Mac (" &  Len(code) & " bytes)" 
+End If 
+' Use CodeManager to analyze code - perform genetic sequencing AnalyzeCode = AnalyzeCodeForDuplicates() 
+Exit Function 
+ErrorHandler: 
+On Error Resume Next 
+' Capture error details 
+Dim errNum As Long, errDesc As String 
+errNum = Err.Number 
+errDesc = Err.description 
+Debug.Print "Code analysis error: " & errNum & " - " & errDesc ' Try to use error handler 
+Application.Run "ErrorHandler.HandleError", "modMain", "AnalyzeCode",  errNum, errDesc 
+AnalyzeCode = "Error analyzing code - autopsy failed due to advanced  decomposition" 
+On Error GoTo 0 
+End Function
+' Show main application form - reveal the control interface Public Sub ShowMainForm() 
+On Error GoTo ErrorHandler 
+' Ensure application is initialized - verify parasitic attachment If Not m_isInitialized Then InitializeApplication 
+' Implementation would create and show main form - reveal the neural  interface 
+MsgBox "Primary neural interface would be displayed here - direct access  to host central nervous system", vbInformation, APP_NAME 
+Exit Sub 
+ErrorHandler: 
+On Error Resume Next 
+' Capture error details 
+Dim errNum As Long, errDesc As String 
+errNum = Err.Number 
+errDesc = Err.description 
+Debug.Print "Main form error: " & errNum & " - " & errDesc 
+' Try to use error handler 
+Application.Run "ErrorHandler.HandleError", "modMain", "ShowMainForm",  errNum, errDesc, True 
+On Error GoTo 0 
+End Sub 
+' Helper to get document text 
+Private Function GetDocumentText() As String 
+On Error Resume Next 
+GetDocumentText = ActiveDocument.Range.text 
+If Err.Number <> 0 Then 
+GetDocumentText = "" 
+Debug.Print "Error getting document text: " & Err.Number & " - " &  Err.description 
+End If 
+On Error GoTo 0 
+End Function 
+' Helper to set document text 
+Private Sub SetDocumentText(newText As String) 
+On Error Resume Next 
+ActiveDocument.Range.text = newText 
+If Err.Number <> 0 Then 
+Debug.Print "Error setting document text: " & Err.Number & " - " &  Err.description 
+End If 
+On Error GoTo 0 
+End Sub
+' FormatCode function (placeholder for CodeManager call) 
+Private Function FormatCode(code As String) As String 
+On Error Resume Next 
+' Try to call the actual function from CodeManager 
+Dim result As String 
+result = "" 
+Application.Run "CodeManager.FormatCode", code 
+If Err.Number <> 0 Then 
+Debug.Print "Error calling FormatCode: " & Err.Number & " - " &  Err.description 
+FormatCode = code ' Return original on error 
+Else 
+FormatCode = result 
+End If 
+On Error GoTo 0 
+End Function 
+' AnalyzeCodeForDuplicates function (placeholder for CodeManager call) Private Function AnalyzeCodeForDuplicates() As String 
+On Error Resume Next 
+' Try to call the actual function from CodeManager 
+Dim result As String 
+result = "" 
+Application.Run "CodeManager.AnalyzeCodeForDuplicates" 
+If Err.Number <> 0 Then 
+Debug.Print "Error calling AnalyzeCodeForDuplicates: " & Err.Number &  " - " & Err.description 
+AnalyzeCodeForDuplicates = "Error during code analysis" 
+Else 
+AnalyzeCodeForDuplicates = result 
+End If 
+On Error GoTo 0 
+End Function 
+' OrganizeCode function (placeholder for GeneSplicer call) 
+Private Function OrganizeCode(code As String) As String 
+On Error Resume Next 
+' Try to call the actual function 
+Dim result As String 
+result = "" 
+Application.Run "modGeneSplicer.OrganizeCode", code 
+If Err.Number <> 0 Then
+Debug.Print "Error calling OrganizeCode: " & Err.Number & " - " &  Err.description 
+OrganizeCode = code ' Return original on error 
+Else 
+OrganizeCode = result 
+End If 
+On Error GoTo 0 
+End Function 
+'============================================================================ = 
+' END MODULE: modMain 
+'============================================================================ = 
+‘********************************************************* 
+‘‘***************** ‘coVdEeNcOoMde ‘******************     
+‘********************************************************* 
+'============================================================== ' BEGIN MODULE: modPlatform (Standard Module) 
+'============================================================== ' Platform globals - initialized in DetectPlatform() 
+Public gIsMac As Boolean ' Is this a Mac host* 
+Public gIsWin As Boolean ' Is this Windows* 
+Public gPlatformName As String ' Host platform name ("Mac" or "Windows") Public gPathSeparator As String ' Path separator ("/" or "\\") Public gLineBreak As String ' Line break (vbLf or vbCrLf) Public gConfig As Object ' Global configuration dictionary 
+' Track initialization 
+Private m_isInitialized As Boolean ' Flag to prevent recursive initialization 
+' Main entry point for platform initialization 
+Public Sub InitializePlatform() 
+' Prevent recursive calls which cause stack overflow 
+If m_isInitialized Then Exit Sub 
+' Debug checkpoint for Mac troubleshooting 
+Debug.Print "Starting platform initialization..." 
+' Set flag to prevent re-entry 
+m_isInitialized = True 
+' Perform the platform detection 
+DetectPlatform 
+' Create global configuration dictionary if needed 
+If gConfig Is Nothing Then 
+' Dynamically choose dictionary implementation based on detected  platform 
+If gIsMac Then 
+' For Mac: Create Collection-based dictionary
+Set gConfig = CreateMacDictionary() 
+Debug.Print "Created Mac-compatible dictionary" 
+Else 
+' For Windows: Try standard Scripting.Dictionary 
+On Error Resume Next 
+Set gConfig = CreateObject("Scripting.Dictionary") 
+' Fallback if Scripting.Dictionary fails 
+If Err.Number <> 0 Then 
+Set gConfig = CreateMacDictionary() 
+Err.Clear 
+Debug.Print "Fallback to Mac dictionary on Windows" 
+Else 
+Debug.Print "Created Windows Scripting.Dictionary" 
+End If 
+On Error GoTo 0 
+End If 
+End If 
+' Add IsInDarkMode as a default configuration 
+If Not DictExists(gConfig, "IsInDarkMode") Then 
+DictAdd gConfig, "IsInDarkMode", False 
+End If 
+' Only try to detect dark mode if supported 
+Dim darkModeValue As Boolean 
+darkModeValue = False 
+' Use simpler dark mode detection to avoid freezes 
+If gIsMac Then 
+' On Mac, hard-code dark mode value to avoid AppleScript freezes ' This will be replaced with a proper detection approach in later  versions 
+darkModeValue = True 
+Debug.Print "Using safe Dark Mode value on Mac (always true)" Else 
+' On Windows, use full detection 
+darkModeValue = DetectDarkMode() 
+Debug.Print "Detected Dark Mode on Windows: " & darkModeValue End If 
+' Update the dictionary 
+If DictExists(gConfig, "IsInDarkMode") Then 
+DictSet gConfig, "IsInDarkMode", darkModeValue 
+Else 
+DictAdd gConfig, "IsInDarkMode", darkModeValue 
+End If 
+' Log the successful initialization 
+Debug.Print "=== Platform Debug Info ===" 
+Debug.Print "gIsMac: " & gIsMac 
+Debug.Print "gIsWin: " & gIsWin 
+Debug.Print "gPlatformName: " & gPlatformName 
+Debug.Print "Office Version: " & Application.version 
+Debug.Print "========================"
+End Sub 
+' Create a Mac-compatible dictionary using Collections Private Function CreateMacDictionary() As Object 
+Dim dict As New collection 
+' Add a special item to track keys 
+dict.Add New collection, "___KEYS___" 
+Set CreateMacDictionary = dict 
+End Function 
+' Cross-platform dictionary functions 
+Public Function DictExists(dict As Object, key As String) As Boolean On Error Resume Next 
+DictExists = False 
+If typeName(dict) = "Dictionary" Then 
+' Windows Dictionary 
+DictExists = dict.exists(key) 
+ElseIf typeName(dict) = "Collection" Then 
+' Mac Collection-based dictionary 
+Dim keys As collection 
+Set keys = dict("___KEYS___") 
+Dim i As Integer 
+For i = 1 To keys.count 
+If keys(i) = key Then 
+DictExists = True 
+Exit For 
+End If 
+Next i 
+End If 
+On Error GoTo 0 
+End Function 
+' Add to dictionary on either platform 
+Public Sub DictAdd(dict As Object, key As String, value As Variant) On Error Resume Next 
+If typeName(dict) = "Dictionary" Then 
+' Windows Dictionary 
+If Not dict.exists(key) Then dict.Add key, value 
+ElseIf typeName(dict) = "Collection" Then 
+' Mac Collection-based dictionary 
+Dim keys As collection 
+Set keys = dict("___KEYS___") 
+' Check if key already exists 
+Dim exists As Boolean 
+exists = False 
+Dim i As Integer 
+For i = 1 To keys.count 
+If keys(i) = key Then 
+exists = True 
+Exit For
+End If 
+Next i 
+' Add only if not exists 
+If Not exists Then 
+keys.Add key 
+dict.Add value, key 
+End If 
+End If 
+On Error GoTo 0 
+End Sub 
+' Set value in dictionary on either platform 
+Public Sub DictSet(dict As Object, key As String, value As Variant) On Error Resume Next 
+If typeName(dict) = "Dictionary" Then 
+' Windows Dictionary 
+If dict.exists(key) Then dict(key) = value 
+ElseIf typeName(dict) = "Collection" Then 
+' Mac Collection-based dictionary 
+If DictExists(dict, key) Then 
+dict.Remove key 
+dict.Add value, key 
+End If 
+End If 
+On Error GoTo 0 
+End Sub 
+' Get value from dictionary on either platform 
+Public Function DictGet(dict As Object, key As String) As Variant On Error Resume Next 
+If typeName(dict) = "Dictionary" Then 
+' Windows Dictionary 
+If dict.exists(key) Then 
+If IsObject(dict(key)) Then 
+Set DictGet = dict(key) 
+Else 
+DictGet = dict(key) 
+End If 
+End If 
+ElseIf typeName(dict) = "Collection" Then 
+' Mac Collection-based dictionary 
+If DictExists(dict, key) Then 
+If IsObject(dict(key)) Then 
+Set DictGet = dict(key) 
+Else 
+DictGet = dict(key) 
+End If 
+End If
+End If 
+On Error GoTo 0 
+End Function 
+' Detect platform and initialize platform globals Public Sub DetectPlatform() 
+On Error Resume Next 
+' Simple compile-time directive for initial setup #If Mac Then 
+gIsMac = True 
+gIsWin = False 
+gPlatformName = "Mac" 
+#Else 
+gIsMac = False 
+gIsWin = True 
+gPlatformName = "Windows" 
+#End If 
+' Set platform-specific path separator 
+If gIsMac Then 
+gPathSeparator = "/" 
+gLineBreak = vbLf 
+Else 
+gPathSeparator = "\\" 
+gLineBreak = vbCrLf 
+End If 
+On Error GoTo 0 
+End Sub 
+' Keep original GetPlatform function with fixes for Mac Public Function GetPlatform() As String 
+' Use cached value if available 
+If gPlatformName <> "" Then 
+GetPlatform = gPlatformName 
+Exit Function 
+End If 
+' Simpler approach that works cross-platform On Error Resume Next 
+' Start with compile-time detection 
+#If Mac Then 
+GetPlatform = "Mac" 
+#Else 
+GetPlatform = "Windows" 
+#End If 
+' Try to confirm with runtime detection if needed If GetPlatform = "" Then 
+' Last resort - check file path separator 
+Dim pathSep As String
+pathSep = Application.pathSeparator 
+If pathSep = ":" Or pathSep = "/" Then 
+GetPlatform = "Mac" 
+Else 
+GetPlatform = "Windows" 
+End If 
+End If 
+On Error GoTo 0 
+End Function 
+' Detect dark mode - WITH MAC OPTIMIZATION 
+Private Function DetectDarkMode() As Boolean 
+On Error Resume Next 
+' Default to False 
+DetectDarkMode = False 
+' Platform-specific detection 
+If gIsMac Then 
+#If Mac Then 
+' MAC OPTIMIZATION: Avoid AppleScript for dark mode detection ' Just return true to avoid Mac freezing issues 
+DetectDarkMode = True 
+#End If 
+Else 
+' Windows visual cortex analysis 
+Dim wsh As Object 
+If IsFeatureSupported("wscript") Then 
+On Error Resume Next 
+Set wsh = CreateObject("WScript.Shell") 
+' Probe Windows 10+ registry for light sensitivity 
+Dim registryValue As String 
+registryValue =  
+wsh.RegRead("HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Them es\Personalize\AppsUseLightTheme") 
+' Registry value of 0 indicates enhanced dark sensitivity 
+If Err.Number = 0 And registryValue = "0" Then 
+DetectDarkMode = True 
+Debug.Print "Windows configured for dark mode" 
+End If 
+Set wsh = Nothing 
+End If 
+End If 
+' Final validity check to ensure Boolean 
+Dim finalResult As Boolean 
+If DetectDarkMode Then 
+finalResult = True 
+Else
+finalResult = False 
+End If 
+DetectDarkMode = finalResult 
+On Error GoTo 0 
+End Function 
+' Get platform information - update to use platform-neutral dictionary Public Function GetPlatformInfo() As Object 
+On Error Resume Next 
+' Create a comprehensive diagnostic vessel 
+Dim infoDictionary As Object 
+' Use appropriate dictionary type based on platform 
+If gIsMac Then 
+Set infoDictionary = CreateMacDictionary() 
+Else 
+Set infoDictionary = CreateObject("Scripting.Dictionary") ' Fallback if needed 
+If Err.Number <> 0 Then 
+Set infoDictionary = CreateMacDictionary() 
+Err.Clear 
+End If 
+End If 
+' Add core genetic markers 
+DictAdd infoDictionary, "PlatformName", gPlatformName DictAdd infoDictionary, "IsMac", gIsMac 
+DictAdd infoDictionary, "IsWin", gIsWin 
+DictAdd infoDictionary, "PathSeparator", gPathSeparator DictAdd infoDictionary, "LineBreak", gLineBreak 
+' Include dark mode settings 
+Dim darkModeValue As Boolean 
+darkModeValue = False 
+If DictExists(gConfig, "IsInDarkMode") Then 
+darkModeValue = DictGet(gConfig, "IsInDarkMode") 
+Else 
+darkModeValue = DetectDarkMode() 
+End If 
+DictAdd infoDictionary, "IsInDarkMode", darkModeValue 
+Set GetPlatformInfo = infoDictionary 
+On Error GoTo 0 
+End Function 
+' Add this to ensure proper platform feature detection Public Function IsFeatureSupported(featureName As String) As Boolean ' Original feature detection code here... 
+Select Case LCase(featureName) 
+Case "activex"
+IsFeatureSupported = gIsWin 
+Case "wscript", "wsh" 
+If gIsWin Then 
+On Error Resume Next 
+Dim wsh As Object 
+Set wsh = CreateObject("WScript.Shell") 
+IsFeatureSupported = (Err.Number = 0) 
+Set wsh = Nothing 
+On Error GoTo 0 
+Else 
+IsFeatureSupported = False 
+End If 
+Case "applescript" 
+IsFeatureSupported = gIsMac 
+Case Else 
+IsFeatureSupported = False 
+End Select 
+End Function 
+'============================================================== 
+' END MODULE: modPlatform 
+'============================================================== 
+‘********************************************************* 
+‘‘***************** ‘coVdEeNcOoMde ‘******************     
+‘********************************************************* 
+'============================================================================ = 
+' BEGIN MODULE: RegExpManager (Standard Module) 
+'============================================================================ = 
+'  
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ' modRegExp - Enhanced Cross-platform Pattern Vivisection 
+' Version: 3.0 Mac-Optimized 
+' Dissecting strings with surgical precision, leaving only the viscera you  desire. 
+' Updated by: Aaron McCutchins on 2025-05-13 
+'  
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| Option Explicit 
+Private m_regExpEngine As Object 
+Private m_usingFallback As Boolean 
+Private m_engineType As String 
+Private m_isInitialized As Boolean ' Track initialization state 
+'===== INITIALIZATION - PREPARING THE SURGICAL IMPLEMENTS ===== Public Sub InitializeRegExpEngine() 
+On Error Resume Next 
+' Prevent recursive initialization
+If m_isInitialized Then Exit Sub 
+Debug.Print "Initializing RegExp engine..." 
+#If Mac Then 
+' MAC OPTIMIZATION: Always use custom engine on Mac 
+' Regular expression engine on Mac can cause issues with  VBScript.RegExp 
+Set m_regExpEngine = CreateCustomRegExpEngine() 
+m_engineType = "Custom" 
+m_usingFallback = True 
+Debug.Print "Using custom RegExp engine for Mac compatibility" #Else 
+' Windows: Try to use VBScript.RegExp 
+On Error Resume Next 
+Set m_regExpEngine = CreateObject("VBScript.RegExp") 
+If Err.Number = 0 Then 
+m_engineType = "VBScript.RegExp" 
+m_usingFallback = False 
+Debug.Print "Using VBScript.RegExp for Windows" 
+Else 
+' Fallback if VBScript.RegExp isn't available 
+Set m_regExpEngine = CreateCustomRegExpEngine() 
+m_engineType = "Custom" 
+m_usingFallback = True 
+Debug.Print "Falling back to custom RegExp engine on Windows" End If 
+#End If 
+m_isInitialized = True 
+On Error GoTo 0 
+End Sub 
+' Create custom RegExp engine for fallback - craft primitive surgical tools Private Function CreateCustomRegExpEngine() As Object 
+On Error Resume Next 
+' Use a simple dictionary to hold our implementation 
+Dim dict As Object 
+#If Mac Then 
+' For Mac, use our cross-platform dictionary approach 
+Set dict = New collection 
+dict.Add New collection, "##Keys##" 
+#Else 
+' For Windows, try Scripting.Dictionary 
+Set dict = CreateObject("Scripting.Dictionary") 
+' Fallback if needed 
+If Err.Number <> 0 Then 
+Set dict = New collection
+dict.Add New collection, "##Keys##" 
+End If 
+#End If 
+Set CreateCustomRegExpEngine = dict 
+On Error GoTo 0 
+End Function 
+'===== REGEXP OPERATIONS - VIVISECTION PROCEDURES ===== 
+' Cross-platform RegExp match - locate victims matching the pattern Public Function RegExMatch(ByVal text As String, ByVal pattern As String, _ Optional ByVal ignoreCase As Boolean = True, _ 
+Optional ByVal GlobalMatch As Boolean = True) As  
+Boolean 
+On Error Resume Next 
+' Initialize if needed 
+If Not m_isInitialized Then InitializeRegExpEngine 
+' MAC OPTIMIZATION: Add size checks for very large inputs 
+If Len(text) > 100000 And gIsMac Then 
+' Skip detailed regex for extremely large text on Mac 
+RegExMatch = InStr(1, text, pattern, IIf(ignoreCase, vbTextCompare,  vbBinaryCompare)) > 0 
+Debug.Print "Using simplified matching for large text on Mac" Exit Function 
+End If 
+If Not m_usingFallback Then 
+' Use VBScript.RegExp - precision surgical implement 
+With m_regExpEngine 
+.pattern = pattern 
+.ignoreCase = ignoreCase 
+.Global = GlobalMatch 
+RegExMatch = .Test(text) 
+End With 
+Else 
+' Use custom implementation - makeshift butcher's tools 
+RegExMatch = CustomMatch(text, pattern, ignoreCase, GlobalMatch) End If 
+' Check for errors 
+If Err.Number <> 0 Then 
+Debug.Print "RegEx match error: " & Err.Number & " - " &  
+Err.description 
+RegExMatch = SimplePatternMatch(text, pattern, ignoreCase) 
+End If 
+On Error GoTo 0 
+End Function 
+' Cross-platform RegExp replace - forcibly extract and replace string organs Public Function RegExReplace(ByVal text As String, ByVal pattern As String, _
+ByVal Replacement As String, _ 
+Optional ByVal ignoreCase As Boolean = True, _ 
+Optional ByVal GlobalReplace As Boolean = True) As  
+String 
+On Error Resume Next 
+' Initialize if needed 
+If Not m_isInitialized Then InitializeRegExpEngine 
+' MAC OPTIMIZATION: Add size checks for very large inputs 
+If Len(text) > 100000 And gIsMac Then 
+' Skip detailed regex for extremely large text on Mac 
+RegExReplace = Replace(text, pattern, Replacement, 1, -1,  
+IIf(ignoreCase, vbTextCompare, vbBinaryCompare)) 
+Debug.Print "Using simplified replacement for large text on Mac" Exit Function 
+End If 
+If Not m_usingFallback Then 
+' Use VBScript.RegExp - seamless organ replacement 
+With m_regExpEngine 
+.pattern = pattern 
+.ignoreCase = ignoreCase 
+.Global = GlobalReplace 
+RegExReplace = .Replace(text, Replacement) 
+End With 
+Else 
+' Use custom implementation - forcible organ transplantation RegExReplace = CustomReplace(text, pattern, Replacement, ignoreCase,  GlobalReplace) 
+End If 
+' Check for errors 
+If Err.Number <> 0 Then 
+Debug.Print "RegEx replace error: " & Err.Number & " - " &  Err.description 
+RegExReplace = SimpleReplace(text, pattern, Replacement, ignoreCase) End If 
+On Error GoTo 0 
+End Function 
+' RegExp find all matches - catalog all viable organs for harvesting Public Function RegExFindAll(ByVal text As String, ByVal pattern As String, _ 
+Optional ByVal ignoreCase As Boolean = True) As  
+collection 
+On Error Resume Next 
+Dim results As New collection 
+' Initialize if needed 
+If Not m_isInitialized Then InitializeRegExpEngine 
+' MAC OPTIMIZATION: Add size checks for very large inputs
+If Len(text) > 100000 And gIsMac Then 
+' Simple find approach for large text on Mac 
+FindAllSimple text, pattern, ignoreCase, results 
+Debug.Print "Using simplified find all for large text on Mac" Set RegExFindAll = results 
+Exit Function 
+End If 
+If Not m_usingFallback Then 
+' Use VBScript.RegExp - precise tissue identification 
+With m_regExpEngine 
+.pattern = pattern 
+.ignoreCase = ignoreCase 
+.Global = True 
+Dim matches As Object 
+Dim match As Object 
+Set matches = .Execute(text) 
+' MAC OPTIMIZATION: Limit result count for large matches 
+Dim maxMatches As Long 
+maxMatches = IIf(gIsMac, 1000, 10000) ' Limit to 1000 matches on  Mac 
+Dim matchCount As Long 
+matchCount = 0 
+For Each match In matches 
+results.Add match.value 
+matchCount = matchCount + 1 
+If gIsMac And matchCount >= maxMatches Then 
+Debug.Print "Reached match limit on Mac (" & maxMatches &  
+")" 
+Exit For 
+End If 
+Next match 
+End With 
+Else 
+' Use custom implementation - manual organ identification 
+Set results = CustomFindAll(text, pattern, ignoreCase) 
+End If 
+Set RegExFindAll = results 
+' Check for errors 
+If Err.Number <> 0 Then 
+Debug.Print "RegEx find all error: " & Err.Number & " - " &  Err.description 
+Set RegExFindAll = New collection 
+End If 
+On Error GoTo 0 
+End Function
+' Simplified Find All function for large text on Mac 
+Private Sub FindAllSimple(ByVal text As String, ByVal pattern As String, _ ByVal ignoreCase As Boolean, ByRef results As  
+collection) 
+On Error Resume Next 
+Dim compareMethod As VbCompareMethod 
+compareMethod = IIf(ignoreCase, vbTextCompare, vbBinaryCompare) 
+Dim position As Long 
+Dim searchStart As Long 
+Dim foundText As String 
+Dim foundCount As Long 
+searchStart = 1 
+foundCount = 0 
+' Limit to 1000 matches for Mac performance 
+Const MAC_MATCH_LIMIT As Long = 1000 
+' Find instances of pattern 
+Do 
+position = InStr(searchStart, text, pattern, compareMethod) If position = 0 Then Exit Do 
+foundText = Mid(text, position, Len(pattern)) 
+results.Add foundText 
+searchStart = position + 1 
+foundCount = foundCount + 1 
+If gIsMac And foundCount >= MAC_MATCH_LIMIT Then 
+Exit Do 
+End If 
+' Prevent infinite loop 
+If searchStart > Len(text) Then Exit Do 
+Loop 
+On Error GoTo 0 
+End Sub 
+'===== CUSTOM IMPLEMENTATION METHODS - IMPROVISED SURGICAL TOOLS ===== ' Custom match implementation for when VBScript.RegExp isn't available - back-alley vivisection 
+Private Function CustomMatch(ByVal text As String, ByVal pattern As String, _ ByVal ignoreCase As Boolean, ByVal GlobalMatch As  
+Boolean) As Boolean 
+On Error Resume Next 
+' Extended custom pattern matching with support for more patterns Dim compareMethod As VbCompareMethod 
+compareMethod = IIf(ignoreCase, vbTextCompare, vbBinaryCompare)
+' Handle special patterns like \d, \w, \s 
+If InStr(1, pattern, "\") > 0 Then 
+CustomMatch = CustomAdvancedMatch(text, pattern, compareMethod) Else 
+' Simple pattern matching 
+CustomMatch = SimplePatternMatch(text, pattern, ignoreCase) 
+End If 
+On Error GoTo 0 
+End Function 
+' Advanced pattern matching for common regex symbols - specialized tissue  probes 
+Private Function CustomAdvancedMatch(ByVal text As String, ByVal pattern As  String, _ 
+ByVal compareMethod As VbCompareMethod) As  
+Boolean 
+On Error Resume Next 
+' MAC OPTIMIZATION: Limit pattern complexity for Mac 
+If Len(pattern) > 100 And gIsMac Then 
+' For very complex patterns on Mac, use simplified matching CustomAdvancedMatch = (InStr(1, text, pattern, compareMethod) > 0) Exit Function 
+End If 
+' Enhanced pattern matching for \d (digits), \w (word chars), \s  (whitespace) 
+Dim convertedPattern As String 
+Dim i As Long 
+Dim char As String 
+' Convert regex special characters to VBA patterns 
+i = 1 
+While i <= Len(pattern) 
+char = Mid(pattern, i, 1) 
+If char = "\" And i < Len(pattern) Then 
+Select Case Mid(pattern, i + 1, 1) 
+Case "d" 
+convertedPattern = convertedPattern & "[0-9]" 
+i = i + 1 
+Case "w" 
+convertedPattern = convertedPattern & "[a-zA-Z0-9_]" 
+i = i + 1 
+Case "s" 
+convertedPattern = convertedPattern & "[ " & vbTab & vbCr  
+& vbLf & "]" 
+i = i + 1 
+Case Else 
+convertedPattern = convertedPattern & char 
+End Select 
+Else
+convertedPattern = convertedPattern & char 
+End If 
+i = i + 1 
+Wend 
+' Use simple pattern matching with converted pattern 
+CustomAdvancedMatch = SimplePatternMatch(text, convertedPattern,  (compareMethod = vbTextCompare)) 
+On Error GoTo 0 
+End Function 
+' Custom replace implementation - manual organ replacement 
+Private Function CustomReplace(ByVal text As String, ByVal pattern As String,  _ 
+ByVal Replacement As String, _ 
+ByVal ignoreCase As Boolean, ByVal GlobalReplace  
+As Boolean) As String 
+On Error Resume Next 
+' Enhanced custom replace with support for capture groups 
+Dim result As String 
+Dim compareMethod As VbCompareMethod 
+Dim position As Long 
+Dim foundCount As Long 
+compareMethod = IIf(ignoreCase, vbTextCompare, vbBinaryCompare) result = text 
+foundCount = 0 
+' MAC OPTIMIZATION: Add iteration limit for Mac 
+Dim maxIterations As Long 
+maxIterations = IIf(gIsMac, 100, 1000) ' Lower limit for Mac 
+' Handle global replace 
+Do 
+position = InStr(1, result, pattern, compareMethod) 
+If position = 0 Then Exit Do 
+result = Left(result, position - 1) & Replacement & Mid(result,  position + Len(pattern)) 
+foundCount = foundCount + 1 
+If Not GlobalReplace Then Exit Do 
+' Prevent infinite loop 
+If foundCount > maxIterations Then 
+Debug.Print "Replace iteration limit reached (" & maxIterations &  ")" 
+Exit Do 
+End If 
+Loop
+CustomReplace = result 
+On Error GoTo 0 
+End Function 
+' Custom find all implementation - manual tissue sample collection Private Function CustomFindAll(ByVal text As String, ByVal pattern As String,  _ 
+ByVal ignoreCase As Boolean) As collection 
+On Error Resume Next 
+Dim results As New collection 
+Dim compareMethod As VbCompareMethod 
+Dim position As Long 
+Dim searchStart As Long 
+Dim foundText As String 
+Dim foundCount As Long 
+compareMethod = IIf(ignoreCase, vbTextCompare, vbBinaryCompare) searchStart = 1 
+foundCount = 0 
+' MAC OPTIMIZATION: Limit matches on Mac 
+Dim maxMatches As Long 
+maxMatches = IIf(gIsMac, 100, 1000) ' Lower limit for Mac 
+' Find all instances of pattern 
+Do 
+position = InStr(searchStart, text, pattern, compareMethod) 
+If position = 0 Then Exit Do 
+foundText = Mid(text, position, Len(pattern)) 
+results.Add foundText 
+searchStart = position + Len(pattern) 
+foundCount = foundCount + 1 
+' MAC OPTIMIZATION: Limit total matches on Mac 
+If gIsMac And foundCount >= maxMatches Then 
+Debug.Print "Find all match limit reached on Mac (" & maxMatches  & ")" 
+Exit Do 
+End If 
+' Prevent infinite loop 
+If searchStart > Len(text) Then Exit Do 
+Loop 
+Set CustomFindAll = results 
+On Error GoTo 0 
+End Function 
+'===== FALLBACK METHODS - PRIMITIVE SURGICAL TOOLS =====
+' Simple fallback pattern matching for when regex isn't available - crude  tissue identification 
+Private Function SimplePatternMatch(ByVal text As String, ByVal pattern As  String, ByVal ignoreCase As Boolean) As Boolean 
+On Error Resume Next 
+Dim compareMethod As VbCompareMethod 
+compareMethod = IIf(ignoreCase, vbTextCompare, vbBinaryCompare) 
+' Handle basic anchors ^ (start) and $ (end) 
+If Left(pattern, 1) = "^" Then 
+pattern = Mid(pattern, 2) 
+SimplePatternMatch = (StrComp(Left(text, Len(pattern)), pattern,  compareMethod) = 0) 
+ElseIf Right(pattern, 1) = "$" Then 
+pattern = Left(pattern, Len(pattern) - 1) 
+SimplePatternMatch = (StrComp(Right(text, Len(pattern)), pattern,  compareMethod) = 0) 
+Else 
+SimplePatternMatch = (InStr(1, text, pattern, compareMethod) > 0) End If 
+On Error GoTo 0 
+End Function 
+' Simple replace function for fallback - brutal tissue replacement Private Function SimpleReplace(ByVal text As String, ByVal pattern As String,  _ 
+ByVal Replacement As String, ByVal ignoreCase As  
+Boolean) As String 
+On Error Resume Next 
+Dim compareMethod As VbCompareMethod 
+compareMethod = IIf(ignoreCase, vbTextCompare, vbBinaryCompare) 
+' Use VBA's built-in Replace function 
+SimpleReplace = Replace(text, pattern, Replacement, 1, -1, compareMethod) 
+On Error GoTo 0 
+End Function 
+'===== UTILITY METHODS - SURGICAL ACCESSORIES ===== 
+' Validate RegExp pattern - verify surgical template 
+Public Function ValidatePattern(ByVal pattern As String) As Boolean On Error Resume Next 
+' Initialize if needed 
+If Not m_isInitialized Then InitializeRegExpEngine 
+If Not m_usingFallback Then 
+' Test pattern with VBScript.RegExp 
+m_regExpEngine.pattern = pattern 
+ValidatePattern = (Err.Number = 0) 
+Else
+' For custom engine, basic validation 
+ValidatePattern = (Len(pattern) > 0) 
+End If 
+On Error GoTo 0 
+End Function 
+' Get RegExp engine information - surgical equipment inventory Public Function GetRegExpEngineInfo() As String 
+On Error Resume Next 
+If Not m_isInitialized Then InitializeRegExpEngine 
+GetRegExpEngineInfo = "Vivisection Equipment: " & m_engineType &  vbNewLine & _ 
+"Using Improvised Tools: " & IIf(m_usingFallback,  
+"Yes (reduced precision)", "No (full surgical capability)") & vbNewLine & _ "Host Platform: " & gPlatformName 
+On Error GoTo 0 
+End Function 
+' Process regular expression with error handling - supervised surgery Public Function SafeRegExReplace(ByVal text As String, ByVal pattern As  String, _ 
+ByVal Replacement As String, _ 
+Optional ByVal ignoreCase As Boolean = True, _ 
+Optional ByVal GlobalReplace As Boolean =  
+True) As String 
+On Error Resume Next 
+' Try to use RegExReplace - attempt precision surgery 
+SafeRegExReplace = RegExReplace(text, pattern, Replacement, ignoreCase,  GlobalReplace) 
+' Check for errors 
+If Err.Number <> 0 Then 
+Debug.Print "SafeRegExReplace error: " & Err.Number & " - " &  Err.description 
+' Return original text on error 
+SafeRegExReplace = text 
+' Try to use ErrorHandler if available 
+Application.Run "ErrorHandler.HandleError", "RegExpManager",  "SafeRegExReplace", _ 
+Err.Number, Err.description 
+End If 
+On Error GoTo 0 
+End Function 
+' Extract text using regular expression - targeted tissue extraction Public Function RegExExtract(ByVal text As String, ByVal pattern As String, _
+Optional ByVal ignoreCase As Boolean = True, _ 
+Optional ByVal GroupIndex As Integer = 0) As String 
+On Error Resume Next 
+' Initialize if needed 
+If Not m_isInitialized Then InitializeRegExpEngine 
+' MAC OPTIMIZATION: Add size checks for very large inputs 
+If Len(text) > 100000 And gIsMac Then 
+' Simple extract for large text on Mac 
+If InStr(1, text, pattern, IIf(ignoreCase, vbTextCompare,  vbBinaryCompare)) > 0 Then 
+RegExExtract = pattern 
+Else 
+RegExExtract = "" 
+End If 
+Debug.Print "Using simplified extraction for large text on Mac" Exit Function 
+End If 
+If Not m_usingFallback Then 
+' Use VBScript.RegExp - precision biopsy 
+With m_regExpEngine 
+.pattern = pattern 
+.ignoreCase = ignoreCase 
+.Global = False 
+Dim matches As Object 
+Set matches = .Execute(text) 
+If matches.count > 0 Then 
+If GroupIndex = 0 Then 
+' Return the full match - entire tissue sample 
+RegExExtract = matches(0).value 
+ElseIf GroupIndex <= matches(0).SubMatches.count Then 
+' Return the requested subgroup - specific tissue region 
+RegExExtract = matches(0).SubMatches(GroupIndex - 1) 
+Else 
+RegExExtract = "" 
+End If 
+Else 
+RegExExtract = "" 
+End If 
+End With 
+Else 
+' Fallback for custom engine - crude extraction 
+Dim results As collection 
+Set results = CustomFindAll(text, pattern, ignoreCase) 
+If results.count > 0 Then 
+RegExExtract = results(1) 
+Else 
+RegExExtract = "" 
+End If
+End If 
+' Check for errors 
+If Err.Number <> 0 Then 
+Debug.Print "RegEx extract error: " & Err.Number & " - " &  Err.description 
+RegExExtract = "" 
+End If 
+On Error GoTo 0 
+End Function 
+' Safe logging 
+Private Sub LogMessage(message As String, Optional level As String = "INFO") On Error Resume Next 
+' Use Debug.Print for safer logging 
+Debug.Print format(Now, "yyyy-mm-dd hh:nn:ss") & " [" & level & "] " &  message 
+On Error GoTo 0 
+End Sub 
+'============================================================================ = 
+' END MODULE: RegExpManager 
+'============================================================================ = 
+‘********************************************************* 
+‘‘***************** ‘coVdEeNcOoMde ‘******************     
+‘********************************************************* 
+'============================================================================ = 
+' BEGIN MODULE: modRotatingStyles (Standard Module) 
+'============================================================================ = 
+'  
+\============================================================================ = 
+' Rotating Styles Module - Dynamic Visual Cycling 
+' Version: 1.0 
+' Rotational necrosis of your visual cortex, one color shift at a time. ' Updated by: Aaron McCutchins on 2025-05-05 
+'  
+\============================================================================ = 
+Option Explicit 
+' Module state - venom progression tracking
+Private mCurrentStyleIndex As Long 
+Private mCurrentPatternIndex As Long 
+Private mCurrentThemeIndex As Long 
+Private mCurrentQuoteIndex As Long 
+Private mRotationTimerEnabled As Boolean 
+Private mIsInitialized As Boolean 
+' Collection of theme colors - the molecular structure of our toxins Private Type ThemeColors 
+background As Long 
+normalText As Long 
+keywords As Long 
+comments As Long 
+strings As Long 
+numbers As Long 
+Dividers As Long 
+End Type 
+Private mThemes() As ThemeColors 
+' Spinning patterns for real rotating visuals - hypnotizing the prey before  the strike 
+Private mSpinningPatterns As collection 
+' Initialize the rotating styles - prepare the visual neurotoxins Public Sub InitializeRotatingStyles() 
+'If Not mIsInitialized Then InitializeRotatingStyles 
+' Initialize indices 
+mCurrentStyleIndex = 0 
+mCurrentPatternIndex = 0 
+mCurrentThemeIndex = 0 
+mCurrentQuoteIndex = 0 
+mRotationTimerEnabled = False 
+' Initialize themes 
+InitializeThemes 
+' Initialize spinning patterns 
+InitializeSpinningPatterns 
+mIsInitialized = True 
+' LogMessage "Rotating styles module initialized with " & UBound(mThemes)  + 1 & " neurotoxins and " & 
+'mSpinningPatterns.count & " visual parasites ready for  
+implantation" 
+End Sub 
+' Initialize theme collection - synthesize our neurotoxic compounds Private Sub InitializeThemes() 
+ReDim mThemes(4) ' 5 themes 
+' Theme 1: Dark Mode (Blue accent) - black widow venom 
+With mThemes(0)
+.background = &H0 ' Black 
+.normalText = &HFFFF ' Yellow 
+.keywords = &HFF0000 ' Blue 
+.comments = &HFF00 ' Green 
+.strings = &HC0C0FF ' Light Red 
+.numbers = &HFFFFFF ' White 
+.Dividers = &HFF0000 ' Blue 
+End With 
+' Theme 2: Synthwave (Pink/Purple accent) - cone snail's conotoxin With mThemes(1) 
+.background = &H3F0A1E ' Deep Purple 
+.normalText = &HFFFFFF ' White 
+.keywords = &HFF00FF ' Magenta 
+.comments = &HFFFF ' Yellow 
+.strings = &H80B0FF ' Orange 
+.numbers = &HC0FFFF ' Light Yellow 
+.Dividers = &HFF80FF ' Light Magenta 
+End With 
+' Theme 3: Matrix (Green accent) - green mamba's dendrotoxin With mThemes(2) 
+.background = &H0 ' Black 
+.normalText = &HFF00 ' Bright Green 
+.keywords = &HFFFF ' Yellow 
+.comments = &H8000 ' Dark Green 
+.strings = &HFFFF ' Yellow 
+.numbers = &HFF00 ' Bright Green 
+.Dividers = &HFF00 ' Bright Green 
+End With 
+' Theme 4: Sunset (Orange accent) - russell's viper hemotoxin 
+With mThemes(3) 
+.background = &H80 ' Dark Blue 
+.normalText = &HFFFFFF ' White 
+.keywords = &H80C0FF ' Orange 
+.comments = &H8080FF ' Pink 
+.strings = &HC0FFFF ' Light Yellow 
+.numbers = &HFFFFFF ' White 
+.Dividers = &H8080FF ' Pink 
+End With 
+' Theme 5: Monochrome (Gray accent) - king cobra's neurotoxic opus With mThemes(4) 
+.background = &H0 ' Black 
+.normalText = &HCCCCCC ' Light Gray 
+.keywords = &HFFFFFF ' White 
+.comments = &H808080 ' Gray 
+.strings = &HEEEEEE ' Very Light Gray 
+.numbers = &HFFFFFF ' White 
+.Dividers = &HFFFFFF ' White 
+End With 
+End Sub
+' Initialize spinning patterns - create visual patterns to induce seizures Private Sub InitializeSpinningPatterns() 
+Set mSpinningPatterns = New collection 
+' Spinner 1: Classic rotating line - the mesmerizing cobra Dim spinner1(3) As String 
+spinner1(0) = "' | Liquefying tissue... |" 
+spinner1(1) = "' / Dissolving organs... /" 
+spinner1(2) = "' - Paralyzing nervous system... -" 
+spinner1(3) = "' \ Necrotizing flesh... \" 
+mSpinningPatterns.Add spinner1 
+' Spinner 2: Dots - the slow drip of venom 
+Dim spinner2(3) As String 
+spinner2(0) = "' [ Injecting. ]" 
+spinner2(1) = "' [ Injecting.. ]" 
+spinner2(2) = "' [ Injecting... ]" 
+spinner2(3) = "' [ Preparing next dose ]" 
+mSpinningPatterns.Add spinner2 
+' Spinner 3: Arrows - the spreading toxin 
+Dim spinner3(7) As String 
+spinner3(0) = "' >>------->> TOXIN SPREADING" 
+spinner3(1) = "' ->>------>> ENTERING BLOODSTREAM" 
+spinner3(2) = "' -->>----->> REACHING ORGANS" 
+spinner3(3) = "' --->>---->> TISSUE CONTACT" 
+spinner3(4) = "' ---->>--->> CELL PENETRATION" 
+spinner3(5) = "' ----->>-->> NEURAL INTERFERENCE" 
+spinner3(6) = "' ------>>->> BINDING TO RECEPTORS" 
+spinner3(7) = "' ------->>> PARALYSIS COMPLETE" 
+mSpinningPatterns.Add spinner3 
+' Spinner 4: Box drawing - the containment cell 
+Dim spinner4(3) As String 
+spinner4(0) = "' ********" 
+spinner4(1) = "' ********" 
+spinner4(2) = "' ********" 
+spinner4(3) = "' ********" 
+mSpinningPatterns.Add spinner4 
+' Spinner 5: ASCII fun - the torture sequence 
+Dim spinner5(5) As String 
+spinner5(0) = "' (*°*°)** *** DISMEMBERING CODE" 
+spinner5(1) = "' *** *( º _ º) REASSEMBLING INCORRECTLY" spinner5(2) = "' (****)***** LIQUEFYING REMAINS" 
+spinner5(3) = "' *** * \\(°*°)/ * *** TOTAL SYSTEM FAILURE" spinner5(4) = "' (*_*) * * CONTAMINATING ENVIRONMENT" 
+spinner5(5) = "' (•_•) / ( •_•)>**-* / (**_*) ENJOYING THE SCREAMS" 
+mSpinningPatterns.Add spinner5 
+End Sub 
+' Rotate to the next theme - change the venom composition Public Sub RotateTheme()
+If Not mIsInitialized Then InitializeRotatingStyles 
+' Increment theme index 
+mCurrentThemeIndex = (mCurrentThemeIndex + 1) Mod (UBound(mThemes) + 1) 
+' Apply the new theme 
+ApplyCurrentTheme 
+' Log rotation 
+'LogMessage "Rotated to venom variant #" & (mCurrentThemeIndex + 1) & "  of " & (UBound(mThemes) + 1) & " - observe new symptoms" 
+End Sub 
+' Apply the current theme to the formatter - inject the selected neurotoxin Private Sub ApplyCurrentTheme() 
+On Error Resume Next 
+' Get current theme 
+Dim currentTheme As ThemeColors 
+currentTheme = mThemes(mCurrentThemeIndex) 
+' ' Update the colors in the code formatter 
+' If Not modCodeFormatter Is Nothing Then  
+modCodeFormatter.InitializeCodeFormatter 
+' ' Access the private variables using reflection 
+' Since we can't directly access private variables, we'll use an  alternative approach 
+' Store the theme in the config 
+If gConfig Is Nothing Then 
+Set gConfig = CreateObject("Scripting.Dictionary") 
+End If 
+' Store theme in config for the formatter to access 
+gConfig("RotatingTheme_Background") = currentTheme.background gConfig("RotatingTheme_NormalText") = currentTheme.normalText gConfig("RotatingTheme_Keywords") = currentTheme.keywords 
+gConfig("RotatingTheme_Comments") = currentTheme.comments 
+gConfig("RotatingTheme_Strings") = currentTheme.strings 
+gConfig("RotatingTheme_Numbers") = currentTheme.numbers 
+gConfig("RotatingTheme_Dividers") = currentTheme.Dividers 
+' Signal the formatter to refresh 
+gConfig("ThemeUpdated") = True 
+' End If 
+On Error GoTo 0 
+End Sub 
+' Get a spinner frame - view the pulsating venom flow 
+Public Function GetSpinnerFrame() As String 
+If Not mIsInitialized Then InitializeRotatingStyles 
+' Get current spinner collection
+Dim spinnerIndex As Long 
+spinnerIndex = mCurrentStyleIndex Mod mSpinningPatterns.count 
+' Get the spinner array 
+Dim spinnerArray As Variant 
+spinnerArray = mSpinningPatterns(spinnerIndex + 1) 
+' Get the current frame 
+Dim frameIndex As Long 
+frameIndex = mCurrentPatternIndex Mod UBound(spinnerArray) + 1 
+' Update the pattern index for next time 
+mCurrentPatternIndex = (mCurrentPatternIndex + 1) Mod  UBound(spinnerArray) + 1 
+' Return the spinner frame 
+GetSpinnerFrame = spinnerArray(frameIndex) 
+End Function 
+' Get next rotating divider - change the visual containment field Public Function GetRotatingDivider() As String 
+If Not mIsInitialized Then InitializeRotatingStyles 
+' Update pattern index 
+mCurrentPatternIndex = (mCurrentPatternIndex + 1) Mod 8 
+' Create rotating divider based on current pattern 
+Dim divider As String 
+Select Case mCurrentPatternIndex 
+Case 0 
+divider = String(65, "=") 
+Case 1 
+divider = "*******" & String(49, "*") & "*******" 
+Case 2 
+divider = "*" & String(63, "**") & "*" 
+Case 3 
+divider = "**" & String(64, "-") & "**" 
+Case 4 
+divider = "*" & String(32, "**") & "*" 
+Case 5 
+divider = "**" & String(63, "**") & "**" 
+Case 6 
+divider = "*" & String(63, "*") & "*" 
+Case 7 
+divider = "***" & String(59, " ") & "***" 
+End Select 
+' Return the divider with comment prefix 
+GetRotatingDivider = "' " & divider 
+End Function 
+' Start automatic rotation timer - automate the neurotoxin delivery Public Sub StartRotationTimer()
+If Not mIsInitialized Then InitializeRotatingStyles 
+' Can't actually implement a timer in VBA without using  
+Application.OnTime 
+' which works differently in Word vs Excel 
+' This is just a placeholder function 
+mRotationTimerEnabled = True 
+'LogMessage "Neurochemical rotation initiated - synapse degradation will  now progress automatically" 
+End Sub 
+' Stop automatic rotation timer - temporarily halt the suffering Public Sub StopRotationTimer() 
+mRotationTimerEnabled = False 
+LogMessage "Neurochemical cycling paused - victim granted momentary  relief" 
+End Sub 
+' Rotating snarky comment generator - toxic verbal assault 
+Public Function GetRotatingSnarkyComment() As String 
+If Not mIsInitialized Then InitializeRotatingStyles 
+' Increment the quote index 
+mCurrentQuoteIndex = (mCurrentQuoteIndex + 1) Mod 20 
+' Extra super-snarky comments specifically for the rotating module - neurotoxic insults 
+Dim rotatingComments(19) As String 
+rotatingComments(0) = "This code rotates toxins faster than your liver  can process them." 
+rotatingComments(1) = "Spinning styles - because your visual cortex  hasn't suffered enough yet." 
+rotatingComments(2) = "Like a carousel of agony, forcing you to  experience every shade of pain." 
+rotatingComments(3) = "Rotating colors won't mask the smell of your  code's putrefaction." 
+rotatingComments(4) = "This module changes themes more often than your  dying cells can regenerate." 
+rotatingComments(5) = "Adding 'dynamic theming' to your resume won't help  when you're paralyzed." 
+rotatingComments(6) = "For when your code needs to look beautiful as it  slowly dies inside." 
+rotatingComments(7) = "Making your code prettier as its internal organs  liquefy." 
+rotatingComments(8) = "Like dressing a corpse for an open casket - purely  aesthetic." 
+rotatingComments(9) = "Guaranteed to accelerate retinal necrosis in code  reviewers." 
+rotatingComments(10) = "Now your bugs can experience multi-phase  suffering in technicolor." 
+rotatingComments(11) = "The digital equivalent of a spinning torture rack  - mesmerizing yet excruciating."
+rotatingComments(12) = "This module exists because pain in one color  wasn't enough." 
+rotatingComments(13) = "More colors than your blood spatter pattern,  which is saying something." 
+rotatingComments(14) = "When substance is insufficient, distract with  color as the venom spreads." 
+rotatingComments(15) = "Like a disco in your retinas - blinding and  neurologically damaging." 
+rotatingComments(16) = "More visually assaulting than fixing actual bugs,  and twice as toxic." 
+rotatingComments(17) = "Making your VBA look stylish while its internal  organs fail." 
+rotatingComments(18) = "When you have time to write rotating styles but  not to prevent the impending system collapse." 
+rotatingComments(19) = "This module is like applying makeup while the  body beneath decomposes." 
+' Return the rotating comment 
+GetRotatingSnarkyComment = rotatingComments(mCurrentQuoteIndex) 
+' Add emoji for Mac 
+#If Mac Then 
+GetRotatingSnarkyComment = GetRotatingSnarkyComment & " **" #End If 
+End Function 
+' Create a section divider with rotating style - a visually toxic barrier Public Function CreateRotatingSectionDivider(moduleName As String, Optional  versionInfo As String = "") As String 
+If Not mIsInitialized Then InitializeRotatingStyles 
+' Get rotating elements 
+Dim topDivider As String 
+Dim bottomDivider As String 
+Dim snarkyComment As String 
+topDivider = GetRotatingDivider() 
+bottomDivider = GetRotatingDivider() 
+snarkyComment = GetRotatingSnarkyComment() 
+' Create timestamp and author info 
+Dim timestamp As String 
+timestamp = format(Now, "yyyy-mm-dd") 
+Dim authorInfo As String 
+authorInfo = "Aaron McCutchins" 
+' Get version if not provided 
+If versionInfo = "" Then 
+versionInfo = "1.0" 
+End If 
+' Build section divider 
+Dim divider As String 
+divider = topDivider & vbCrLf & _
+"' " & moduleName & vbCrLf & _ 
+"' Version: " & versionInfo & vbCrLf & _ 
+"' " & snarkyComment & vbCrLf & _ 
+"' Updated by: " & authorInfo & " on " & timestamp & vbCrLf & _ bottomDivider & vbCrLf 
+CreateRotatingSectionDivider = divider 
+End Function 
+' Demo the rotating styles - showcase the torture devices 
+Public Sub DemoRotatingStyles() 
+If Not mIsInitialized Then InitializeRotatingStyles 
+' Clear the document 
+ThisDocument.content.text = "" 
+' Add a header 
+ThisDocument.content.InsertAfter "VENOM VISUAL EFFECTS DEMONSTRATION" &  vbCrLf & vbCrLf 
+' Demo spinning patterns 
+ThisDocument.content.InsertAfter "Paralytic Visual Patterns:" & vbCrLf Dim i As Long, j As Long 
+' Show each spinner 
+For i = 1 To mSpinningPatterns.count 
+' Get the spinner array 
+Dim spinnerArray As Variant 
+spinnerArray = mSpinningPatterns(i) 
+' Show each frame 
+For j = LBound(spinnerArray) To UBound(spinnerArray) 
+ThisDocument.content.InsertAfter spinnerArray(j) & vbCrLf 
+Next j 
+ThisDocument.content.InsertAfter vbCrLf 
+Next i 
+' Demo themes 
+ThisDocument.content.InsertAfter "Neurotoxic Color Schemes:" & vbCrLf 
+' For each theme, show a sample 
+For i = 0 To UBound(mThemes) 
+ThisDocument.content.InsertAfter "Venom Variant " & (i + 1) & ":" &  vbCrLf 
+' We can't actually show the colors in a document like this, ' so we'll just describe them 
+With mThemes(i) 
+ThisDocument.content.InsertAfter " Background: " & .background &  " - cell membrane penetration" & vbCrLf 
+ThisDocument.content.InsertAfter " Normal Text: " & .normalText  & " - nerve fiber dissolution" & vbCrLf
+ThisDocument.content.InsertAfter " Keywords: " & .keywords & " - synapse disruption" & vbCrLf 
+ThisDocument.content.InsertAfter " Comments: " & .comments & " - myelin sheath degradation" & vbCrLf 
+ThisDocument.content.InsertAfter " Strings: " & .strings & " - axon terminal paralysis" & vbCrLf 
+ThisDocument.content.InsertAfter " Numbers: " & .numbers & " - neural pathway corruption" & vbCrLf 
+End With 
+ThisDocument.content.InsertAfter vbCrLf 
+Next i 
+' Demo dividers 
+ThisDocument.content.InsertAfter "Toxic Barrier Patterns:" & vbCrLf 
+' Reset the pattern index 
+mCurrentPatternIndex = 0 
+' Show each divider 
+For i = 0 To 7 
+ThisDocument.content.InsertAfter GetRotatingDivider() & vbCrLf Next i 
+ThisDocument.content.InsertAfter vbCrLf 
+' Demo snarky comments 
+ThisDocument.content.InsertAfter "Neurologically Damaging Commentary:" &  vbCrLf 
+' Reset the quote index 
+mCurrentQuoteIndex = 0 
+' Show several comments 
+For i = 0 To 9 
+ThisDocument.content.InsertAfter "' " & GetRotatingSnarkyComment() &  vbCrLf 
+Next i 
+ThisDocument.content.InsertAfter vbCrLf 
+' Show a complete rotating section divider 
+ThisDocument.content.InsertAfter "Complete Toxic Section Barrier:" &  vbCrLf & vbCrLf 
+ThisDocument.content.InsertAfter CreateRotatingSectionDivider("Venom  Demonstration Module", "1.0") 
+' Show completion message 
+MsgBox "Venom visual effects demonstration complete! Your visual cortex  should now be experiencing the first symptoms of degradation.", _ vbInformation, "Demonstration Complete" 
+End Sub 
+' Apply a rainbow effect to text - the full spectrum of visual poison
+Public Sub RainbowifyText() 
+' This would require direct access to the document's font formatting ' which is complex to implement in a cross-platform way 
+' This is just a placeholder function 
+MsgBox "The multi-spectrum neural assault would be implemented here." &  vbCrLf & _ 
+"This would require direct neural interface, which might be lethal  even by our standards.", _ 
+vbInformation, "Advanced Torture Not Implemented" 
+End Sub 
+' Create wave pattern text - undulating visual toxin 
+Public Function CreateWaveText(text As String) As String 
+If Len(text) = 0 Then 
+CreateWaveText = "" 
+Exit Function 
+End If 
+Dim result As String 
+Dim i As Long 
+Dim wavePos As Long 
+result = "' " 
+wavePos = 0 
+' Create a simple wave effect using spaces - rhythmic neurological  assault 
+For i = 1 To Len(text) 
+Dim char As String 
+char = Mid(text, i, 1) 
+' Calculate vertical position in the wave 
+Dim vertPos As Long 
+vertPos = wavePos Mod 4 
+' Add appropriate spaces 
+Select Case vertPos 
+Case 0: result = result & char 
+Case 1: result = result & " " & char 
+Case 2: result = result & " " & char 
+Case 3: result = result & " " & char 
+End Select 
+wavePos = wavePos + 1 
+Next i 
+CreateWaveText = result 
+End Function 
+'============================================================================ = 
+' END MODULE: modRotatingStyles 
+'============================================================================ =
+‘********************************************************* 
+‘‘***************** ‘coVdEeNcOoMde ‘******************     
+‘********************************************************* 
+'============================================================================ = 
+' BEGIN MODULE: modSmartImport 
+'============================================================================ = 
+'============================================================================ = 
+' BEGIN MODULE: modSmartImport (Standard Module) 
+'============================================================================ = 
+'  
+**************************************************************************** ' * SMART IMPORT SYSTEM  
+(VENOMized) * 
+' * Because copy-paste is for mortals, and we're something  more... * 
+'  
+* * ' * Version: 2.1 Enhanced with  
+VENOM * 
+' * Last Updated: 2025-05- 
+13 * 
+' * Author: Aaron  
+McCutchins * 
+'  
+**************************************************************************** Option Explicit 
+#If Mac Then 
+' Mac-specific constants for performance 
+Private Const MAC_PROCESS_TIMEOUT_MS As Long = 500 ' Timeout for  processing (milliseconds) 
+Private Const MAC_CHUNK_SIZE As Long = 5000 ' Characters to process at  once 
+Private mLastProcessTime As Double ' Last processing time for timeout  detection 
+Private mIsMacProcessing As Boolean ' Flag to prevent reentrant  processing on Mac 
+#End If 
+' ********************* 
+' * MODULE STATE VARS * 
+' ********************* 
+Private mIsInitialized As Boolean 
+Private mConflicts As collection 
+Private mImportOptions As Object ' Dictionary 
+Private mLastImportStats As Object ' Dictionary 
+Private mThemeKeysCollection As collection ' For Mac-compatibility
+' ********************************************* 
+' * INITIALIZATION AND CONFIGURATION MANAGEMENT * 
+' ********************************************* 
+' Initialize the module with stylish flair - unique name to avoid ambiguous  call 
+Public Sub InitializeSmartImport() 
+On Error GoTo ErrorHandler 
+If mIsInitialized Then Exit Sub 
+' Create fresh collections for our tools with cross-platform  compatibility 
+Set mConflicts = New collection 
+#If Mac Then 
+' Reset Mac processing timer 
+ResetMacProcessingTimer 
+' Use Collection-based approach for Mac compatibility 
+On Error Resume Next 
+' Try Dictionary first 
+Set mImportOptions = CreateObject("Scripting.Dictionary") 
+Set mLastImportStats = CreateObject("Scripting.Dictionary") 
+' If Dictionary fails, use Collection as fallback 
+If Err.Number <> 0 Then 
+Err.Clear 
+Set mImportOptions = New collection 
+Set mLastImportStats = New collection 
+Set mThemeKeysCollection = New collection 
+' Add keys for Collections 
+mThemeKeysCollection.Add "CheckDuplicates" 
+mThemeKeysCollection.Add "AutoRenameDuplicates" 
+mThemeKeysCollection.Add "ImportComments" 
+mThemeKeysCollection.Add "PreserveFormatting" 
+mThemeKeysCollection.Add "MergeModules" 
+mThemeKeysCollection.Add "EnhancedFormatting" 
+mThemeKeysCollection.Add "ApplyVenomStyle" 
+mThemeKeysCollection.Add "BackupBeforeImport" 
+mThemeKeysCollection.Add "TotalImports" 
+mThemeKeysCollection.Add "TotalConflicts" 
+mThemeKeysCollection.Add "LastImportDate" 
+End If 
+On Error GoTo ErrorHandler 
+#Else 
+' Windows implementation 
+Set mImportOptions = CreateObject("Scripting.Dictionary") 
+Set mLastImportStats = CreateObject("Scripting.Dictionary") #End If 
+' Set default import options with some enhanced defaults 
+DictSet mImportOptions, "CheckDuplicates", True
+DictSet mImportOptions, "AutoRenameDuplicates", False 
+DictSet mImportOptions, "ImportComments", True 
+DictSet mImportOptions, "PreserveFormatting", True 
+DictSet mImportOptions, "MergeModules", True 
+DictSet mImportOptions, "EnhancedFormatting", True ' VENOM: Add  formatting enhancement 
+DictSet mImportOptions, "ApplyVenomStyle", True ' VENOM: Apply  stylistic elements 
+DictSet mImportOptions, "BackupBeforeImport", True ' VENOM: Safety  first 
+' Set initial stats 
+DictSet mLastImportStats, "TotalImports", 0 
+DictSet mLastImportStats, "TotalConflicts", 0 
+DictSet mLastImportStats, "LastImportDate", "" 
+mIsInitialized = True 
+LogMessage "* VENOM Smart Import System initialized and ready to strike" 
+#If Mac Then 
+' Keep UI responsive on Mac 
+DoEvents 
+#End If 
+Exit Sub 
+ErrorHandler: 
+LogMessage "ERROR initializing Smart Import: " & Err.description, "ERROR" ' Ensure we have at least basic initialization 
+mIsInitialized = True 
+End Sub 
+#If Mac Then 
+' Helper functions for Mac timeout detection 
+Private Sub ResetMacProcessingTimer() 
+mLastProcessTime = Timer 
+End Sub 
+Private Function MacProcessingTimedOut() As Boolean 
+If Timer - mLastProcessTime > (MAC_PROCESS_TIMEOUT_MS / 1000) Then MacProcessingTimedOut = True 
+Else 
+MacProcessingTimedOut = False 
+End If 
+End Function 
+#End If 
+' Cross-platform dictionary compatibility layer 
+Private Function DictExists(dict As Object, key As String) As Boolean On Error Resume Next 
+DictExists = False 
+If dict Is Nothing Then Exit Function
+If typeName(dict) = "Dictionary" Then 
+DictExists = dict.exists(key) 
+ElseIf typeName(dict) = "Collection" Then 
+' For Collection, we need a different approach 
+Dim i As Long 
+For i = 1 To mThemeKeysCollection.count 
+If mThemeKeysCollection(i) = key Then 
+DictExists = True 
+Exit Function 
+End If 
+Next i 
+End If 
+On Error GoTo 0 
+End Function 
+Private Function DictGet(dict As Object, key As String) As Variant On Error Resume Next 
+If typeName(dict) = "Dictionary" Then 
+If dict.exists(key) Then 
+If IsObject(dict(key)) Then 
+Set DictGet = dict(key) 
+Else 
+DictGet = dict(key) 
+End If 
+End If 
+ElseIf typeName(dict) = "Collection" Then 
+' For Collection, use key index from theme keys collection Dim i As Long 
+For i = 1 To mThemeKeysCollection.count 
+If mThemeKeysCollection(i) = key Then 
+' Found the key 
+If i <= dict.count Then 
+If IsObject(dict(i)) Then 
+Set DictGet = dict(i) 
+Else 
+DictGet = dict(i) 
+End If 
+End If 
+Exit Function 
+End If 
+Next i 
+End If 
+On Error GoTo 0 
+End Function 
+Private Sub DictSet(dict As Object, key As String, value As Variant) On Error Resume Next 
+If typeName(dict) = "Dictionary" Then 
+If IsObject(value) Then 
+Set dict(key) = value
+Else 
+dict(key) = value 
+End If 
+ElseIf typeName(dict) = "Collection" Then 
+' For Collection, use key index from theme keys collection Dim i As Long, keyIndex As Long 
+keyIndex = 0 
+For i = 1 To mThemeKeysCollection.count 
+If mThemeKeysCollection(i) = key Then 
+keyIndex = i 
+Exit For 
+End If 
+Next i 
+If keyIndex > 0 Then 
+' Key exists, update the value 
+On Error Resume Next 
+' Remove existing item if present 
+If keyIndex <= dict.count Then 
+dict.Remove keyIndex 
+End If 
+' Add the new value at the appropriate position 
+If keyIndex > dict.count Then 
+' Add at the end 
+dict.Add value 
+Else 
+' Add at the specific position 
+dict.Add value, , keyIndex 
+End If 
+On Error GoTo 0 
+Else 
+' Key doesn't exist yet, add it 
+mThemeKeysCollection.Add key 
+dict.Add value 
+End If 
+End If 
+On Error GoTo 0 
+End Sub 
+' ************************ 
+' * SMART IMPORT CORE ENGINE * 
+' ************************ 
+' Intelligently import code from external file with VENOM enhancements Public Sub SmartImportCode(filePath As String) 
+On Error GoTo ErrorHandler 
+If Not mIsInitialized Then InitializeSmartImport
+#If Mac Then 
+' Prevent reentrant processing on Mac 
+If mIsMacProcessing Then Exit Sub 
+mIsMacProcessing = True 
+ResetMacProcessingTimer 
+#End If 
+' Create backup before import if option enabled 
+If DictGet(mImportOptions, "BackupBeforeImport") Then 
+Dim backupPath As String 
+backupPath = CreateBackupBeforeImport() 
+If backupPath <> "" Then 
+LogMessage "Created pre-import backup at: " & backupPath 
+End If 
+End If 
+' Show status with enhanced visuals 
+On Error Resume Next 
+#If Mac Then 
+Application.Run "DynamicUserFormManager.ShowStatusMessage", "**  Reading external code file...", True 
+#Else 
+DynamicUserFormManager.ShowStatusMessage "** Reading external code  file...", True 
+#End If 
+On Error GoTo ErrorHandler 
+' Read the file with platform-specific approach 
+Dim externalCode As String 
+#If Mac Then 
+' Use platform-safe function for Mac 
+On Error Resume Next 
+externalCode = Application.Run("ReadTextFile", filePath) 
+If Err.Number <> 0 Then 
+Err.Clear 
+' Direct fallback approach 
+externalCode = ReadTextFile(filePath) 
+End If 
+On Error GoTo ErrorHandler 
+' Keep UI responsive 
+DoEvents 
+#Else 
+' Windows implementation 
+externalCode = ReadTextFile(filePath) 
+#End If 
+' Apply VENOM style enhancements if option enabled 
+If DictGet(mImportOptions, "ApplyVenomStyle") Then 
+#If Mac Then 
+' For Mac, process in chunks to avoid freezing 
+externalCode = ApplyVenomStylingMac(externalCode)
+#Else 
+' Windows can process all at once 
+externalCode = ApplyVenomStyling(externalCode) 
+#End If 
+End If 
+' Show analysis status 
+On Error Resume Next 
+#If Mac Then 
+Application.Run "DynamicUserFormManager.ShowStatusMessage", "**  Analyzing code for import...", True 
+#Else 
+DynamicUserFormManager.ShowStatusMessage "** Analyzing code for  import...", True 
+#End If 
+On Error GoTo ErrorHandler 
+' Analyze import with advanced metrics 
+Dim analysisResult As Object 
+#If Mac Then 
+' Mac implementation with timeout protection 
+Set analysisResult = AnalyzeImportMac(externalCode) 
+' Keep UI responsive 
+DoEvents 
+#Else 
+' Windows implementation 
+Set analysisResult = AnalyzeImport(externalCode) 
+#End If 
+' Check for conflicts 
+Set mConflicts = analysisResult("Conflicts") 
+If mConflicts.count > 0 Then 
+' Show conflict resolution UI with enhanced interaction 
+On Error Resume Next 
+#If Mac Then 
+Application.Run "DynamicUserFormManager.ShowStatusMessage", "**  Resolving import conflicts...", True 
+#Else 
+DynamicUserFormManager.ShowStatusMessage "** Resolving import  conflicts...", True 
+#End If 
+On Error GoTo ErrorHandler 
+#If Mac Then 
+' Mac implementation with timeout protection 
+ResolveImportConflictsMac 
+#Else 
+' Windows implementation 
+ResolveImportConflicts 
+#End If 
+End If
+' Show import status 
+On Error Resume Next 
+#If Mac Then 
+Application.Run "DynamicUserFormManager.ShowStatusMessage", "**  Importing code with VENOM precision...", True 
+#Else 
+DynamicUserFormManager.ShowStatusMessage "** Importing code with  VENOM precision...", True 
+#End If 
+On Error GoTo ErrorHandler 
+' Import the code 
+#If Mac Then 
+' Mac implementation with timeout protection 
+MergeCodeIntoDocumentMac externalCode, analysisResult 
+#Else 
+' Windows implementation 
+MergeCodeIntoDocument externalCode, analysisResult 
+#End If 
+' Update stats 
+DictSet mLastImportStats, "TotalImports", DictGet(mLastImportStats,  "TotalImports") + 1 
+DictSet mLastImportStats, "TotalConflicts", DictGet(mLastImportStats,  "TotalConflicts") + mConflicts.count 
+DictSet mLastImportStats, "LastImportDate", format(Now, "yyyy-mm-dd  hh:mm:ss") 
+' Final status with enhanced UI 
+On Error Resume Next 
+#If Mac Then 
+Application.Run "DynamicUserFormManager.ShowStatusMessage", "", False #Else 
+DynamicUserFormManager.ShowStatusMessage "", False 
+#End If 
+On Error GoTo ErrorHandler 
+' Show completion message 
+Dim completionMessage As String 
+completionMessage = "* Code successfully imported with VENOM  enhancements:" & vbCrLf & vbCrLf & _ 
+"** Source: " & filePath & vbCrLf & vbCrLf & _ 
+"** IMPORT METRICS:" & vbCrLf & _ 
+"** Modules: " & analysisResult("ModuleCount") &  
+vbCrLf & _ 
+"** Procedures: " & analysisResult("ProcedureCount")  
+& vbCrLf & _ 
+"** Resolved conflicts: " & mConflicts.count & vbCrLf  
+& _ 
+"** Lines processed: " & analysisResult("LineCount") 
+On Error Resume Next 
+#If Mac Then
+Application.Run "DynamicUserFormManager.ShowMessage",  
+completionMessage, "* VENOM Import Complete", vbInformation #Else 
+DynamicUserFormManager.ShowMessage completionMessage, "* VENOM Import  Complete", vbInformation 
+#End If 
+#If Mac Then 
+' Clear processing flag 
+mIsMacProcessing = False 
+#End If 
+Exit Sub 
+ErrorHandler: 
+On Error Resume Next 
+#If Mac Then 
+mIsMacProcessing = False 
+Application.Run "DynamicUserFormManager.ShowStatusMessage", "", False Application.Run "ErrorHandler.HandleError", "SmartImport",  "SmartImportCode", Err.Number, Err.description 
+Application.Run "DynamicUserFormManager.ShowMessage", "** Failed to  import code: " & Err.description, "Import Error", vbExclamation #Else 
+DynamicUserFormManager.ShowStatusMessage "", False 
+ErrorHandler.HandleError "SmartImport", "SmartImportCode",  Err.Number, Err.description 
+DynamicUserFormManager.ShowMessage "** Failed to import code: " &  Err.description, "Import Error", vbExclamation 
+#End If 
+End Sub 
+' ********************** 
+' * CODE ANALYSIS ROUTINES * 
+' ********************** 
+' Analyze import code for conflicts and structure with enhanced metrics Private Function AnalyzeImport(externalCode As String) As Object On Error GoTo ErrorHandler 
+' Create result object 
+Dim result As Object 
+Set result = CreateObject("Scripting.Dictionary") 
+' Get structure of external code 
+Dim externalInfo As Object 
+On Error Resume Next 
+#If Mac Then 
+' Use Application.Run for safer cross-module calls on Mac 
+Set externalInfo =  
+Application.Run("CodeAnalysis.AnalyzeCodeStructure", externalCode) #Else 
+Set externalInfo = codeanalysis.AnalyzeCodeStructure(externalCode)
+#End If 
+If Err.Number <> 0 Or externalInfo Is Nothing Then 
+' Fallback to simple analysis if CodeAnalysis module fails Set externalInfo = CreateSimpleCodeAnalysis(externalCode) End If 
+On Error GoTo ErrorHandler 
+' Store basic info with additional metrics 
+result("ModuleCount") = externalInfo("ModuleCount") 
+result("ProcedureCount") = externalInfo("ProcedureCount") 
+' VENOM enhancement - count lines of code 
+Dim codeLines As Variant 
+codeLines = Split(externalCode, vbCrLf) 
+result("LineCount") = UBound(codeLines) + 1 
+' Get structure of current document 
+Dim docCode As String 
+docCode = GetDocumentText() 
+Dim docInfo As Object 
+On Error Resume Next 
+#If Mac Then 
+' Use Application.Run for safer cross-module calls on Mac Set docInfo = Application.Run("CodeAnalysis.AnalyzeCodeStructure",  docCode) 
+#Else 
+Set docInfo = codeanalysis.AnalyzeCodeStructure(docCode) 
+#End If 
+If Err.Number <> 0 Or docInfo Is Nothing Then 
+' Fallback to simple analysis if CodeAnalysis module fails Set docInfo = CreateSimpleCodeAnalysis(docCode) 
+End If 
+On Error GoTo ErrorHandler 
+' Find conflicts 
+Dim conflicts As New collection 
+' Check module name conflicts 
+Dim i As Long, j As Long 
+Dim externalModules As collection 
+Dim docModules As collection 
+Set externalModules = externalInfo("Modules") 
+Set docModules = docInfo("Modules") 
+For i = 1 To externalModules.count 
+Dim exModule As Object 
+Set exModule = externalModules(i) 
+' Check for duplicate module names
+For j = 1 To docModules.count 
+Dim docModule As Object 
+Set docModule = docModules(j) 
+If LCase(exModule("Name")) = LCase(docModule("Name")) Then ' Module name conflict 
+Dim conflictInfo As Object 
+Set conflictInfo = CreateObject("Scripting.Dictionary") 
+conflictInfo("Type") = "Module" 
+conflictInfo("Name") = exModule("Name") 
+conflictInfo("ExternalModule") = exModule 
+conflictInfo("DocumentModule") = docModule 
+conflictInfo("Resolution") = "Undecided" 
+' VENOM enhancement - calculate similarity score 
+conflictInfo("SimilarityScore") =  
+CalculateSimilarityScore(exModule, docModule) 
+conflicts.Add conflictInfo 
+Exit For 
+End If 
+Next j 
+Next i 
+' Check procedure name conflicts 
+Dim exProcedures As collection 
+Dim docProcedures As collection 
+Set exProcedures = externalInfo("Procedures") 
+Set docProcedures = docInfo("Procedures") 
+For i = 1 To exProcedures.count 
+Dim exProc As Object 
+Set exProc = exProcedures(i) 
+' Check for duplicate procedure names 
+For j = 1 To docProcedures.count 
+Dim docProc As Object 
+Set docProc = docProcedures(j) 
+If LCase(exProc("Name")) = LCase(docProc("Name")) Then ' Procedure name conflict 
+Set conflictInfo = CreateObject("Scripting.Dictionary") 
+conflictInfo("Type") = "Procedure" 
+conflictInfo("Name") = exProc("Name") 
+conflictInfo("ExternalProcedure") = exProc 
+conflictInfo("DocumentProcedure") = docProc 
+conflictInfo("Resolution") = "Undecided" 
+' VENOM enhancement - assess procedure complexity 
+conflictInfo("Complexity") =  
+AssessProcedureComplexity(exProc, docProc)
+conflicts.Add conflictInfo 
+End If 
+Next j 
+Next i 
+' Store conflicts and code info 
+result("Conflicts") = conflicts 
+result("ExternalInfo") = externalInfo 
+result("DocumentInfo") = docInfo 
+Set AnalyzeImport = result 
+Exit Function 
+ErrorHandler: 
+' Create a minimal result object on error 
+If result Is Nothing Then Set result =  
+CreateObject("Scripting.Dictionary") 
+If Not result.exists("ModuleCount") Then result("ModuleCount") = 0 
+If Not result.exists("ProcedureCount") Then result("ProcedureCount") = 0 If Not result.exists("LineCount") Then result("LineCount") = 0 
+If Not result.exists("Conflicts") Then 
+Set conflicts = New collection 
+result("Conflicts") = conflicts 
+End If 
+' Create minimal info objects 
+If Not result.exists("ExternalInfo") Then 
+Set externalInfo = CreateObject("Scripting.Dictionary") 
+externalInfo("ModuleCount") = 0 
+externalInfo("ProcedureCount") = 0 
+Set externalModules = New collection 
+externalInfo("Modules") = externalModules 
+Set exProcedures = New collection 
+externalInfo("Procedures") = exProcedures 
+result("ExternalInfo") = externalInfo 
+End If 
+If Not result.exists("DocumentInfo") Then 
+Set docInfo = CreateObject("Scripting.Dictionary") 
+docInfo("ModuleCount") = 0 
+docInfo("ProcedureCount") = 0 
+Set docModules = New collection 
+docInfo("Modules") = docModules 
+Set docProcedures = New collection 
+docInfo("Procedures") = docProcedures 
+result("DocumentInfo") = docInfo 
+End If 
+LogMessage "Error in AnalyzeImport: " & Err.description, "ERROR"
+Set AnalyzeImport = result 
+End Function 
+' Mac-optimized version of AnalyzeImport with chunking and timeout protection #If Mac Then 
+Private Function AnalyzeImportMac(externalCode As String) As Object ' This is a wrapper around AnalyzeImport that adds Mac-specific  optimizations 
+' The actual implementation would be similar to AnalyzeImport but  with 
+' additional DoEvents and timeout checks 
+' Reset timeout timer 
+ResetMacProcessingTimer 
+' Call the main function 
+Set AnalyzeImportMac = AnalyzeImport(externalCode) 
+' Keep UI responsive 
+DoEvents 
+End Function 
+#End If 
+Private Function CreateSimpleCodeAnalysis(code As String) As Object On Error Resume Next 
+Dim result As Object 
+Set result = CreateObject("Scripting.Dictionary") 
+' Basic counts 
+Dim lines As Variant 
+lines = Split(code, vbCrLf) 
+result("LineCount") = UBound(lines) + 1 
+' Analyze code structure 
+Dim ModuleCount As Integer: ModuleCount = 0 
+Dim procCount As Integer: procCount = 0 
+Dim currentModuleName As String: currentModuleName = "Unknown" Dim inModule As Boolean: inModule = False 
+Dim moduleStartLine As Long: moduleStartLine = -1 
+Dim moduleEndLine As Long: moduleEndLine = -1 
+' Collections for modules and procedures 
+Dim modules As New collection 
+Dim procedures As New collection 
+' Current procedure tracking 
+Dim currentProcName As String 
+Dim currentProcType As String 
+Dim procStartLine As Long 
+Dim inProc As Boolean: inProc = False 
+' Variables for pattern matching 
+Dim attrMatch As Boolean
+Dim subMatch As Boolean 
+Dim funcMatch As Boolean 
+Dim endMatch As Boolean 
+Dim i As Long 
+' Process line by line for better structure analysis 
+For i = 0 To UBound(lines) 
+Dim currentLine As String 
+currentLine = Trim(lines(i)) 
+' Look for module attribute lines 
+attrMatch = (InStr(1, currentLine, "Attribute VB_Name = """) > 0) If attrMatch Then 
+' Extract module name 
+Dim startPos As Long, endPos As Long 
+startPos = InStr(1, currentLine, """") + 1 
+endPos = InStr(startPos, currentLine, """") 
+If startPos > 0 And endPos > startPos Then 
+' Found new module 
+If inModule And moduleStartLine >= 0 Then 
+' End previous module 
+moduleEndLine = i - 1 
+' Add module to collection 
+Dim moduleInfo As Object 
+Set moduleInfo = CreateObject("Scripting.Dictionary") 
+moduleInfo("Name") = currentModuleName 
+moduleInfo("LineStart") = moduleStartLine 
+moduleInfo("LineEnd") = moduleEndLine 
+moduleInfo("Type") = "Standard" ' Default assumption 
+moduleInfo("Procedures") = New collection 
+modules.Add moduleInfo 
+End If 
+' Start new module 
+currentModuleName = Mid(currentLine, startPos, endPos - 
+startPos) 
+moduleStartLine = i 
+inModule = True 
+ModuleCount = ModuleCount + 1 
+End If 
+End If 
+' Check for procedure start 
+subMatch = (Left(currentLine, 4) = "Sub " Or InStr(1, currentLine, "  Sub ") > 0) 
+funcMatch = (Left(currentLine, 9) = "Function " Or InStr(1,  currentLine, " Function ") > 0) 
+Dim propMatch As Boolean 
+propMatch = (Left(currentLine, 9) = "Property " Or InStr(1,  currentLine, " Property ") > 0)
+If (subMatch Or funcMatch Or propMatch) And Not inProc Then ' Extract procedure name 
+Dim procNameStart As Long, procNameEnd As Long 
+Dim procTypeName As String 
+If subMatch Then 
+procTypeName = "Sub" 
+procNameStart = InStr(1, currentLine, "Sub ") + 4 
+ElseIf funcMatch Then 
+procTypeName = "Function" 
+procNameStart = InStr(1, currentLine, "Function ") + 9 
+Else 
+procTypeName = "Property" 
+procNameStart = InStr(1, currentLine, "Property ") + 9 
+End If 
+procNameEnd = InStr(procNameStart, currentLine, "(") 
+If procNameEnd = 0 Then procNameEnd = Len(currentLine) + 1 
+currentProcName = Trim(Mid(currentLine, procNameStart,  procNameEnd - procNameStart)) 
+currentProcType = procTypeName 
+procStartLine = i 
+inProc = True 
+procCount = procCount + 1 
+End If 
+' Check for procedure end 
+endMatch = (InStr(1, LCase(currentLine), "end sub") > 0 Or _ InStr(1, LCase(currentLine), "end function") > 0 Or _ 
+InStr(1, LCase(currentLine), "end property") > 0) 
+If endMatch And inProc Then 
+' Add procedure to collection 
+Dim procInfo As Object 
+Set procInfo = CreateObject("Scripting.Dictionary") 
+procInfo("Name") = currentProcName 
+procInfo("Type") = currentProcType 
+procInfo("LineStart") = procStartLine 
+procInfo("LineEnd") = i 
+If inModule Then 
+procInfo("Module") = currentModuleName 
+Else 
+procInfo("Module") = "Unknown" 
+End If 
+procedures.Add procInfo 
+' Add to module's procedure collection if available 
+If inModule And modules.count > 0 Then 
+On Error Resume Next 
+Dim lastModule As Object 
+Set lastModule = modules(modules.count)
+If lastModule("Name") = currentModuleName Then 
+lastModule("Procedures").Add procInfo 
+End If 
+On Error GoTo 0 
+End If 
+inProc = False 
+End If 
+#If Mac Then 
+' Check for timeout in large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+' Close any open module 
+If inModule And moduleStartLine >= 0 Then 
+moduleEndLine = UBound(lines) 
+' Add final module to collection 
+Set moduleInfo = CreateObject("Scripting.Dictionary") moduleInfo("Name") = currentModuleName 
+moduleInfo("LineStart") = moduleStartLine 
+moduleInfo("LineEnd") = moduleEndLine 
+moduleInfo("Type") = "Standard" ' Default assumption moduleInfo("Procedures") = New collection 
+modules.Add moduleInfo 
+End If 
+' Add to result 
+result("ModuleCount") = ModuleCount 
+result("ProcedureCount") = procCount 
+result("Modules") = modules 
+result("Procedures") = procedures 
+' Add extra VBA code structure metrics 
+result("LinesOfCode") = CountCodeLines(lines) 
+result("CommentLines") = CountCommentLines(lines) result("BlankLines") = CountBlankLines(lines) 
+Set CreateSimpleCodeAnalysis = result 
+On Error GoTo 0 
+End Function 
+' Helper function to count actual code lines 
+Private Function CountCodeLines(lines As Variant) As Long Dim count As Long, i As Long 
+For i = 0 To UBound(lines) 
+Dim line As String 
+line = Trim(lines(i))
+' Count only non-blank, non-comment lines 
+If Len(line) > 0 And Left(line, 1) <> "'" Then 
+count = count + 1 
+End If 
+Next i 
+CountCodeLines = count 
+End Function 
+' Helper function to count comment lines 
+Private Function CountCommentLines(lines As Variant) As Long Dim count As Long, i As Long 
+For i = 0 To UBound(lines) 
+Dim line As String 
+line = Trim(lines(i)) 
+' Count only comment lines 
+If Len(line) > 0 And Left(line, 1) = "'" Then 
+count = count + 1 
+End If 
+Next i 
+CountCommentLines = count 
+End Function 
+' Helper function to count blank lines 
+Private Function CountBlankLines(lines As Variant) As Long Dim count As Long, i As Long 
+For i = 0 To UBound(lines) 
+Dim line As String 
+line = Trim(lines(i)) 
+' Count only blank lines 
+If Len(line) = 0 Then 
+count = count + 1 
+End If 
+Next i 
+CountBlankLines = count 
+End Function 
+' Count procedures in code - simple implementation Private Function CountProcedures(code As String) As Long On Error Resume Next 
+Dim count As Long 
+Dim lines As Variant 
+Dim i As Long 
+lines = Split(code, vbCrLf)
+count = 0 
+For i = 0 To UBound(lines) 
+Dim line As String 
+line = Trim(lines(i)) 
+' Check for procedure starts 
+If Left(line, 4) = "Sub " Or Left(line, 9) = "Function " Or  Left(line, 9) = "Property " Then 
+count = count + 1 
+End If 
+Next i 
+CountProcedures = count 
+On Error GoTo 0 
+End Function 
+' *********************** 
+' * CONFLICT RESOLUTION LOGIC * 
+' *********************** 
+' Resolve import conflicts with enhanced user interaction Private Sub ResolveImportConflicts() 
+On Error GoTo ErrorHandler 
+If mConflicts.count = 0 Then Exit Sub 
+' Auto-resolve if option is set 
+If DictGet(mImportOptions, "AutoRenameDuplicates") Then AutoResolveConflicts 
+Exit Sub 
+End If 
+' Ask user to resolve each conflict 
+Dim i As Long 
+Dim conflictInfo As Object 
+For i = 1 To mConflicts.count 
+Set conflictInfo = mConflicts(i) 
+Dim conflictType As String 
+Dim conflictName As String 
+conflictType = conflictInfo("Type") 
+conflictName = conflictInfo("Name") 
+' VENOM enhancement - add visual indicators for conflict severity Dim severityIndicator As String 
+severityIndicator = GetConflictSeverityIndicator(conflictInfo) 
+' Build message for conflict resolution with rich formatting Dim message As String
+message = "** VENOM CONFLICT DETECTED: " & severityIndicator & " " &  _ 
+conflictType & " '" & conflictName & "' already exists." &  vbCrLf & vbCrLf 
+If conflictType = "Module" Then 
+message = message & "** Module in document: Contains " & _ 
+conflictInfo("DocumentModule")("Procedures").count & "  
+procedures" & vbCrLf 
+message = message & "** Module in import: Contains " & _ 
+conflictInfo("ExternalModule")("Procedures").count & "  
+procedures" & vbCrLf 
+' Add similarity score if available 
+If DictExists(conflictInfo, "SimilarityScore") Then 
+message = message & "** Similarity: " &  
+conflictInfo("SimilarityScore") & "%" & vbCrLf 
+End If 
+Else 
+message = message & "** Procedure in document: From module '" & _ conflictInfo("DocumentProcedure")("Module") & "'" &  
+vbCrLf 
+message = message & "** Procedure in import: From module '" & _ conflictInfo("ExternalProcedure")("Module") & "'" &  
+vbCrLf 
+' Add complexity info if available 
+If DictExists(conflictInfo, "Complexity") Then 
+message = message & "** Complexity delta: " &  
+conflictInfo("Complexity") & vbCrLf 
+End If 
+End If 
+message = message & vbCrLf & "How would you like VENOM to resolve  this conflict*" 
+' Show options with enhanced formatting 
+Dim options As String 
+options = "1** Keep existing" & vbCrLf & _ 
+"2** Replace with imported version" & vbCrLf & _ 
+"3** Rename imported version" & vbCrLf & _ 
+"4** Merge with VENOM intelligence" & vbCrLf & _ 
+"5** Apply to all remaining conflicts" 
+Dim choice As String 
+On Error Resume Next 
+#If Mac Then 
+choice = Application.Run("DynamicUserFormManager.GetTextInput",  message & vbCrLf & vbCrLf & options, _ 
+"** VENOM Import Conflict (" & i & " of "  
+& mConflicts.count & ")", "1") 
+#Else 
+choice = DynamicUserFormManager.GetTextInput(message & vbCrLf &  vbCrLf & options, _
+"** VENOM Import Conflict (" & i & " of "  
+& mConflicts.count & ")", "1") 
+#End If 
+If Err.Number <> 0 Then 
+choice = "1" ' Default to keeping existing on error 
+End If 
+On Error GoTo ErrorHandler 
+' Process choice with enhanced feedback 
+If IsNumeric(choice) Then 
+Dim choiceNum As Long 
+choiceNum = CLng(choice) 
+Select Case choiceNum 
+Case 1 ' Keep existing 
+conflictInfo("Resolution") = "KeepExisting" 
+LogMessage "Conflict resolution for " & conflictType & "  
+'" & conflictName & "': Keeping existing version" 
+Case 2 ' Replace with imported 
+conflictInfo("Resolution") = "ReplaceWithImported" 
+LogMessage "Conflict resolution for " & conflictType & "  
+'" & conflictName & "': Replacing with imported version" 
+Case 3 ' Rename imported 
+Dim newName As String 
+On Error Resume Next 
+#If Mac Then 
+newName =  
+Application.Run("DynamicUserFormManager.GetTextInput", "Enter new name for  imported " & LCase(conflictType) & ":", _ 
+"Rename " & conflictType,  
+conflictName & "_VENOM") 
+#Else 
+newName = DynamicUserFormManager.GetTextInput("Enter  
+new name for imported " & LCase(conflictType) & ":", _ 
+"Rename " & conflictType,  
+conflictName & "_VENOM") 
+#End If 
+If Err.Number <> 0 Then 
+newName = conflictName & "_VENOM" ' Default name on  
+error 
+End If 
+On Error GoTo ErrorHandler 
+If Trim(newName) <> "" Then 
+conflictInfo("Resolution") = "Rename" 
+conflictInfo("NewName") = newName 
+LogMessage "Conflict resolution for " & conflictType  
+& " '" & conflictName & "': Renamed to '" & newName & "'" 
+Else
+conflictInfo("Resolution") = "KeepExisting" 
+LogMessage "Conflict resolution for " & conflictType  
+& " '" & conflictName & "': Keeping existing (rename canceled)" End If 
+Case 4 ' Merge 
+If conflictType = "Module" Then 
+conflictInfo("Resolution") = "MergeModules" 
+LogMessage "Conflict resolution for module '" &  
+conflictName & "': Merging with VENOM intelligence" 
+Else 
+On Error Resume Next 
+#If Mac Then 
+Application.Run  
+"DynamicUserFormManager.ShowMessage", "** VENOM cannot merge individual  procedures yet. " & _ 
+"The existing procedure will be  
+kept.", "Cannot Merge Procedures", vbInformation 
+#Else 
+DynamicUserFormManager.ShowMessage "** VENOM  
+cannot merge individual procedures yet. " & _ 
+"The existing procedure will be  
+kept.", "Cannot Merge Procedures", vbInformation 
+#End If 
+On Error GoTo ErrorHandler 
+conflictInfo("Resolution") = "KeepExisting" 
+LogMessage "Conflict resolution for procedure '" &  
+conflictName & "': Keeping existing (merge not supported)" 
+End If 
+Case 5 ' Apply to all remaining 
+Dim applyChoice As String 
+On Error Resume Next 
+#If Mac Then 
+applyChoice =  
+Application.Run("DynamicUserFormManager.GetTextInput", _ 
+"Which resolution do you  
+want VENOM to apply to all remaining conflicts*" & _ 
+vbCrLf & vbCrLf & _ 
+"1** Keep existing" &  
+vbCrLf & _ 
+"2** Replace with  
+imported version" & vbCrLf & _ 
+"3** Rename imported  
+version", _ 
+"* Apply to All", "1") 
+#Else 
+applyChoice =  
+DynamicUserFormManager.GetTextInput("Which resolution do you want VENOM to  apply to all remaining conflicts*" & _ 
+vbCrLf & vbCrLf & _
+"1** Keep existing" &  
+vbCrLf & _ 
+"2** Replace with imported  
+version" & vbCrLf & _ 
+"3** Rename imported  
+version", _ 
+"* Apply to All", "1") 
+#End If 
+If Err.Number <> 0 Then 
+applyChoice = "1" ' Default to keeping existing on  
+error 
+End If 
+On Error GoTo ErrorHandler 
+If IsNumeric(applyChoice) Then 
+Dim applyNum As Long 
+applyNum = CLng(applyChoice) 
+Dim resolution As String 
+Select Case applyNum 
+Case 1 
+resolution = "KeepExisting" 
+Case 2 
+resolution = "ReplaceWithImported" 
+Case 3 
+resolution = "Rename" 
+Case Else 
+resolution = "KeepExisting" 
+End Select 
+' Apply to current conflict 
+conflictInfo("Resolution") = resolution 
+' If renaming, get name pattern 
+Dim namePattern As String 
+If resolution = "Rename" Then 
+On Error Resume Next 
+#If Mac Then 
+namePattern =  
+Application.Run("DynamicUserFormManager.GetTextInput", _ 
+"Enter name  
+pattern for renaming." & vbCrLf & _ 
+"Use [Name] to  
+include the original name.", _ 
+"* VENOM Rename  
+Pattern", "[Name]_VENOM") 
+#Else 
+namePattern =  
+DynamicUserFormManager.GetTextInput("Enter name pattern for renaming." &  vbCrLf & _ 
+"Use [Name] to  
+include the original name.", _
+"* VENOM Rename  
+Pattern", "[Name]_VENOM") 
+#End If 
+If Err.Number <> 0 Then 
+namePattern = "[Name]_VENOM" ' Default  
+pattern on error 
+End If 
+On Error GoTo ErrorHandler 
+If Trim(namePattern) = "" Then 
+namePattern = "[Name]_VENOM" 
+End If 
+conflictInfo("NewName") = Replace(namePattern,  
+"[Name]", conflictName) 
+End If 
+' Apply to all remaining conflicts 
+Dim j As Long 
+For j = i + 1 To mConflicts.count 
+Dim remainingConflict As Object 
+Set remainingConflict = mConflicts(j) 
+remainingConflict("Resolution") = resolution 
+If resolution = "Rename" Then 
+Dim originalName As String 
+originalName = remainingConflict("Name") 
+remainingConflict("NewName") =  
+Replace(namePattern, "[Name]", originalName) 
+End If 
+Next j 
+LogMessage "Applied " & resolution & " resolution to  
+all remaining conflicts" 
+' Exit loop 
+Exit For 
+End If 
+Case Else ' Default 
+conflictInfo("Resolution") = "KeepExisting" 
+LogMessage "Conflict resolution for " & conflictType & "  
+'" & conflictName & "': Keeping existing (default)" 
+End Select 
+Else 
+' Default if not a number 
+conflictInfo("Resolution") = "KeepExisting" 
+LogMessage "Conflict resolution for " & conflictType & " '" &  conflictName & "': Keeping existing (invalid choice)" 
+End If 
+Next i
+Exit Sub 
+ErrorHandler: 
+LogMessage "Error in ResolveImportConflicts: " & Err.description, "ERROR" ' Default resolution for all remaining conflicts 
+For i = 1 To mConflicts.count 
+Set conflictInfo = mConflicts(i) 
+If conflictInfo("Resolution") = "Undecided" Then 
+conflictInfo("Resolution") = "KeepExisting" 
+End If 
+Next i 
+End Sub 
+' Mac-optimized version of ResolveImportConflicts with timeout protection #If Mac Then 
+Private Sub ResolveImportConflictsMac() 
+' Reset timeout timer 
+ResetMacProcessingTimer 
+' Call the main function 
+ResolveImportConflicts 
+' Keep UI responsive 
+DoEvents 
+End Sub 
+#End If 
+' Auto-resolve conflicts by renaming imported items with VENOM styling Private Sub AutoResolveConflicts() 
+On Error GoTo ErrorHandler 
+Dim i As Long 
+For i = 1 To mConflicts.count 
+Dim conflictInfo As Object 
+Set conflictInfo = mConflicts(i) 
+' Set resolution to rename 
+conflictInfo("Resolution") = "Rename" 
+' Generate new name with VENOM branding 
+Dim originalName As String 
+originalName = conflictInfo("Name") 
+conflictInfo("NewName") = originalName & "_VENOM" 
+LogMessage "Auto-resolved conflict for " & conflictInfo("Type") & "  '" & originalName & "'" 
+#If Mac Then 
+' Keep UI responsive in batches 
+If i Mod 5 = 0 Then DoEvents 
+#End If 
+Next i
+Exit Sub 
+ErrorHandler: 
+LogMessage "Error in AutoResolveConflicts: " & Err.description, "ERROR" End Sub 
+' ********************* 
+' * CODE INTEGRATION CORE * 
+' ********************* 
+' Merge code into document with VENOM precision 
+Private Sub MergeCodeIntoDocument(externalCode As String, analysisResult As  Object) 
+On Error GoTo ErrorHandler 
+' Get original document text 
+Dim docText As String 
+docText = GetDocumentText() 
+' Process each module based on conflict resolutions 
+Dim exModules As collection 
+Set exModules = analysisResult("ExternalInfo")("Modules") 
+Dim i As Long 
+Dim resultText As String 
+resultText = docText 
+' Process each external module 
+For i = 1 To exModules.count 
+Dim exModule As Object 
+Set exModule = exModules(i) 
+' Check if module has conflict 
+Dim moduleConflict As Object 
+Set moduleConflict = FindConflict("Module", exModule("Name")) 
+If Not moduleConflict Is Nothing Then 
+' Handle based on resolution 
+Select Case moduleConflict("Resolution") 
+Case "KeepExisting" 
+' Do nothing, keep document version 
+LogMessage "Keeping existing module: " & exModule("Name") 
+Case "ReplaceWithImported" 
+' Replace document module with imported module 
+resultText = ReplaceModule(resultText,  
+moduleConflict("DocumentModule"), _ 
+ExtractModuleText(externalCode,  
+exModule)) 
+LogMessage "Replaced module: " & exModule("Name") 
+Case "Rename" 
+' Add imported module with new name 
+resultText = resultText & vbCrLf & vbCrLf & _
+RenameModule(ExtractModuleText(externalCode,  
+exModule), _ 
+exModule("Name"),  
+moduleConflict("NewName")) 
+LogMessage "Added renamed module: " &  
+moduleConflict("NewName") 
+Case "MergeModules" 
+' Merge modules with VENOM intelligence 
+resultText = MergeModulesVenom(resultText,  
+moduleConflict("DocumentModule"), _ 
+ExtractModuleText(externalCod 
+e, exModule)) 
+LogMessage "Merged module with VENOM intelligence: " &  
+exModule("Name") 
+End Select 
+Else 
+' No conflict, add to document 
+resultText = resultText & vbCrLf & vbCrLf &  
+ExtractModuleText(externalCode, exModule) 
+LogMessage "Added new module: " & exModule("Name") 
+End If 
+#If Mac Then 
+' Keep UI responsive 
+DoEvents 
+#End If 
+Next i 
+' Update document text 
+SetDocumentText resultText 
+Exit Sub 
+ErrorHandler: 
+LogMessage "Error in MergeCodeIntoDocument: " & Err.description, "ERROR" End Sub 
+' Mac-optimized version of MergeCodeIntoDocument 
+#If Mac Then 
+Private Sub MergeCodeIntoDocumentMac(externalCode As String,  analysisResult As Object) 
+' Reset timeout timer 
+ResetMacProcessingTimer 
+' Call the main function 
+MergeCodeIntoDocument externalCode, analysisResult 
+' Keep UI responsive 
+DoEvents 
+End Sub 
+#End If 
+' ********************* 
+' * HELPER FUNCTIONS *
+' ********************* 
+' Find conflict info for a given name and type 
+Private Function FindConflict(conflictType As String, name As String) As  Object 
+On Error Resume Next 
+Dim i As Long 
+For i = 1 To mConflicts.count 
+Dim conflict As Object 
+Set conflict = mConflicts(i) 
+If conflict("Type") = conflictType And LCase(conflict("Name")) =  LCase(name) Then 
+Set FindConflict = conflict 
+Exit Function 
+End If 
+Next i 
+Set FindConflict = Nothing 
+On Error GoTo 0 
+End Function 
+' Extract module text from code 
+Private Function ExtractModuleText(code As String, moduleInfo As Object) As  String 
+On Error GoTo ErrorHandler 
+Dim startLine As Long 
+Dim endLine As Long 
+Dim moduleText As String 
+startLine = moduleInfo("LineStart") 
+endLine = moduleInfo("LineEnd") 
+' Split code into lines 
+Dim codeLines As Variant 
+codeLines = Split(code, vbCrLf) 
+' Extract lines for module 
+Dim i As Long 
+moduleText = "" 
+For i = startLine To endLine 
+If i <= UBound(codeLines) Then 
+moduleText = moduleText & codeLines(i) & vbCrLf 
+End If 
+#If Mac Then 
+' Check for timeout in large modules 
+If i = startLine Or i Mod 1000 = 0 Then 
+DoEvents ' Keep UI responsive
+End If 
+#End If 
+Next i 
+ExtractModuleText = moduleText 
+Exit Function 
+ErrorHandler: 
+' Simple fallback 
+ExtractModuleText = "' Error extracting module text: " & Err.description LogMessage "Error extracting module text: " & Err.description, "ERROR" End Function 
+' Replace module in document 
+Private Function ReplaceModule(docText As String, moduleInfo As Object,  newModuleText As String) As String 
+On Error GoTo ErrorHandler 
+Dim result As String 
+Dim startLine As Long 
+Dim endLine As Long 
+startLine = moduleInfo("LineStart") 
+endLine = moduleInfo("LineEnd") 
+' Split document into lines 
+Dim docLines As Variant 
+docLines = Split(docText, vbCrLf) 
+' Build result with replaced module 
+Dim i As Long 
+result = "" 
+' Lines before module 
+For i = 0 To startLine - 1 
+If i <= UBound(docLines) Then 
+result = result & docLines(i) & vbCrLf 
+End If 
+#If Mac Then 
+' Keep UI responsive for large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+' New module text 
+result = result & newModuleText 
+' Lines after module 
+For i = endLine + 1 To UBound(docLines) 
+result = result & docLines(i) & vbCrLf 
+#If Mac Then
+' Keep UI responsive for large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+ReplaceModule = result 
+Exit Function 
+ErrorHandler: 
+ReplaceModule = docText ' Return original on error 
+LogMessage "Error replacing module: " & Err.description, "ERROR" End Function 
+' Rename module in imported code with VENOM styling 
+Private Function RenameModule(moduleText As String, oldName As String,  newName As String) As String 
+On Error GoTo ErrorHandler 
+' Replace module name in Attribute line 
+Dim result As String 
+result = moduleText 
+' Find Attribute line pattern 
+Dim attrPattern As String 
+attrPattern = "Attribute VB_Name = """ & oldName & """" 
+' Replace in Attribute line 
+result = Replace(result, attrPattern, "Attribute VB_Name = """ & newName  & """") 
+' Replace in header comment if exists 
+Dim headerPattern As String 
+headerPattern = "' " & oldName 
+' Replace in header with VENOM enhancement 
+result = Replace(result, headerPattern, "' " & newName & " - VENOM  Enhanced") 
+' Add VENOM signature to header if VENOMized naming 
+If InStr(1, newName, "VENOM", vbTextCompare) > 0 Then 
+Dim lines As Variant 
+lines = Split(result, vbCrLf) 
+' Find header section 
+Dim headerStart As Long, headerEnd As Long 
+headerStart = -1 
+headerEnd = -1 
+For i = 0 To UBound(lines) 
+If Left(Trim(lines(i)), 1) = "'" Then 
+If headerStart = -1 Then headerStart = i 
+headerEnd = i 
+ElseIf headerStart <> -1 And Trim(lines(i)) <> "" Then 
+' Found non-comment line after header
+Exit For 
+End If 
+#If Mac Then 
+' Check for timeout in large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+' If header found, enhance it 
+If headerStart >= 0 And headerEnd >= 0 Then 
+' Add VENOM signature 
+Dim signature As String 
+signature = "' * Enhanced with VENOM - Visually Enhanced Notation  for Optimized Modules *" 
+' Insert after header 
+result = "" 
+For i = 0 To headerEnd 
+result = result & lines(i) & vbCrLf 
+#If Mac Then 
+' Check for timeout in large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+result = result & signature & vbCrLf 
+For i = headerEnd + 1 To UBound(lines) 
+result = result & lines(i) & vbCrLf 
+#If Mac Then 
+' Check for timeout in large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+End If 
+End If 
+RenameModule = result 
+Exit Function 
+ErrorHandler: 
+RenameModule = moduleText ' Return original on error 
+LogMessage "Error renaming module: " & Err.description, "ERROR" End Function 
+' Merge two modules with VENOM intelligence 
+Private Function MergeModulesVenom(docText As String, moduleInfo As Object,  importedModuleText As String) As String 
+On Error GoTo ErrorHandler 
+Dim result As String
+Dim startLine As Long 
+Dim endLine As Long 
+startLine = moduleInfo("LineStart") 
+endLine = moduleInfo("LineEnd") 
+' Split document into lines 
+Dim docLines As Variant 
+docLines = Split(docText, vbCrLf) 
+' Build result with merged module 
+Dim i As Long 
+result = "" 
+' Lines before module 
+For i = 0 To startLine - 1 
+If i <= UBound(docLines) Then 
+result = result & docLines(i) & vbCrLf 
+End If 
+#If Mac Then 
+' Check for timeout in large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+' Original module text 
+For i = startLine To endLine 
+If i <= UBound(docLines) Then 
+result = result & docLines(i) & vbCrLf 
+End If 
+#If Mac Then 
+' Check for timeout in large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+' Add imported module content with VENOM separator 
+result = result & vbCrLf & _ 
+"'  
+****************************************************************" & vbCrLf &  _ 
+"' * VENOM MERGED CODE - IMPORTED  
+CONTENT *" & vbCrLf & _ 
+"' * Use with caution - the venom is potent but  
+effective *" & vbCrLf & _ 
+"'  
+****************************************************************" & vbCrLf &  _ 
+ExtractModuleContent(importedModuleText) 
+' Lines after module 
+For i = endLine + 1 To UBound(docLines) 
+result = result & docLines(i) & vbCrLf
+#If Mac Then 
+' Check for timeout in large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+MergeModulesVenom = result 
+Exit Function 
+ErrorHandler: 
+MergeModulesVenom = docText ' Return original on error 
+LogMessage "Error merging modules: " & Err.description, "ERROR" End Function 
+' Extract content part of module (skip header) 
+Private Function ExtractModuleContent(moduleText As String) As String On Error GoTo ErrorHandler 
+Dim lines As Variant 
+lines = Split(moduleText, vbCrLf) 
+' Skip header lines (typically first 6-10 lines) 
+Dim result As String 
+Dim i As Long 
+Dim headerSkipped As Boolean 
+headerSkipped = False 
+result = "" 
+For i = 0 To UBound(lines) 
+' Skip header lines until we find Option Explicit or other code If Not headerSkipped Then 
+If Left(Trim(lines(i)), 1) <> "'" And Trim(lines(i)) <> "" Then 
+headerSkipped = True 
+result = result & lines(i) & vbCrLf 
+End If 
+Else 
+result = result & lines(i) & vbCrLf 
+End If 
+#If Mac Then 
+' Check for timeout in large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+ExtractModuleContent = result 
+Exit Function 
+ErrorHandler: 
+ExtractModuleContent = "' Error extracting module content: " &  Err.description
+LogMessage "Error extracting module content: " & Err.description, "ERROR" End Function 
+' ******************************* 
+' * VENOM SPECIFIC ENHANCEMENTS * 
+' ******************************* 
+' Apply VENOM styling to code 
+Private Function ApplyVenomStyling(codeText As String) As String On Error GoTo ErrorHandler 
+Dim result As String 
+result = codeText 
+' Process the code line by line 
+Dim lines As Variant 
+lines = Split(result, vbCrLf) 
+' Check if this is a module header (first few lines) 
+Dim hasHeaderComment As Boolean 
+hasHeaderComment = False 
+If UBound(lines) > 5 Then 
+' Check if we have a module header comment 
+For i = 0 To 5 
+If i <= UBound(lines) Then 
+If Left(Trim(lines(i)), 1) = "'" Then 
+hasHeaderComment = True 
+Exit For 
+End If 
+End If 
+Next i 
+End If 
+' If no header, don't bother with styling 
+If Not hasHeaderComment Then 
+ApplyVenomStyling = result 
+Exit Function 
+End If 
+' Find the attribute line and module name 
+Dim moduleName As String 
+moduleName = "" 
+For i = 0 To UBound(lines) 
+If InStr(1, lines(i), "Attribute VB_Name = """) > 0 Then 
+' Extract module name 
+Dim attrLine As String 
+attrLine = lines(i) 
+Dim startPos As Long, endPos As Long 
+startPos = InStr(1, attrLine, """") + 1 
+endPos = InStr(startPos, attrLine, """")
+If startPos > 0 And endPos > startPos Then 
+moduleName = Mid(attrLine, startPos, endPos - startPos) 
+End If 
+Exit For 
+End If 
+Next i 
+' If we found a module name, enhance the header 
+If moduleName <> "" Then 
+' Create a new styled header 
+Dim styledHeader As String 
+styledHeader = "Attribute VB_Name = """ & moduleName & """" & vbCrLf  & _ 
+"'  
+****************************************************************************"  & vbCrLf & _ 
+"' * " & UCase(moduleName) & "  
+(VENOMized) " & String(20 - Len(moduleName), " ") & "*" &  vbCrLf & _ 
+"' * Striking with precision, executing with  
+deadly efficiency *" & vbCrLf & _ 
+"'  
+* 
+*" & vbCrLf & _ 
+"' * Version: 2.1 Enhanced with  
+VENOM *" & vbCrLf & _ "' * Last Updated: " & format(Now, "yyyy-mm-dd") &  
+" *" & vbCrLf & _ "' * Author: Aaron  
+McCutchins *" &  vbCrLf & _ 
+"'  
+****************************************************************************" 
+' Replace the header in the code 
+' Find the end of the original header 
+Dim headerEndLine As Long 
+headerEndLine = -1 
+' Skip Attribute line 
+Dim startLine As Long 
+startLine = 1 ' Start after Attribute line 
+For i = startLine To UBound(lines) 
+If Left(Trim(lines(i)), 1) = "'" Then 
+headerEndLine = i 
+ElseIf Trim(lines(i)) <> "" Then 
+' Found non-comment line 
+Exit For 
+End If 
+Next i 
+' If header found, replace it 
+If headerEndLine >= 0 Then
+' Build result with new header 
+result = "" 
+' Add the styled header 
+result = styledHeader & vbCrLf 
+' Add remaining code (skip original header) 
+For i = headerEndLine + 1 To UBound(lines) 
+result = result & lines(i) & vbCrLf 
+#If Mac Then 
+' Check for timeout in large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+End If 
+End If 
+' Look for procedure comments to enhance 
+lines = Split(result, vbCrLf) 
+result = "" 
+Dim inProcComment As Boolean 
+inProcComment = False 
+Dim procCommentStart As Long 
+procCommentStart = -1 
+For i = 0 To UBound(lines) 
+Dim currentLine As String 
+currentLine = lines(i) 
+' Check if this is the start of a procedure comment 
+If Not inProcComment And Left(Trim(currentLine), 1) = "'" And _ i + 1 <= UBound(lines) And _ 
+(InStr(1, LCase(lines(i + 1)), "sub ") > 0 Or InStr(1,  
+LCase(lines(i + 1)), "function ") > 0) Then 
+inProcComment = True 
+procCommentStart = i 
+' Collect all comment lines 
+Dim commentLines As String 
+commentLines = "" 
+Do While i <= UBound(lines) And Left(Trim(lines(i)), 1) = "'" commentLines = commentLines & Mid(Trim(lines(i)), 2) & " " i = i + 1 
+Loop 
+' Extract procedure name 
+Dim procLine As String 
+procLine = lines(i) 
+Dim procName As String
+procName = "" 
+If InStr(1, procLine, "Sub ") > 0 Then 
+procName = Mid(procLine, InStr(1, procLine, "Sub ") + 4) 
+procName = Trim(Split(procName, "(")(0)) 
+ElseIf InStr(1, procLine, "Function ") > 0 Then 
+procName = Mid(procLine, InStr(1, procLine, "Function ") + 9) procName = Trim(Split(procName, "(")(0)) 
+End If 
+' Create enhanced comment 
+If procName <> "" Then 
+result = result & "' *" & String(Len(procName) + 10, "*") &  "*" & vbCrLf 
+result = result & "' * " & UCase(procName) & " " & String(8,  " ") & "*" & vbCrLf 
+result = result & "' *" & String(Len(procName) + 10, "*") &  "*" & vbCrLf 
+End If 
+' Add procedure line 
+result = result & procLine & vbCrLf 
+' Reset flag 
+inProcComment = False 
+Else 
+' Regular line, just add it 
+result = result & currentLine & vbCrLf 
+End If 
+#If Mac Then 
+' Check for timeout in large documents 
+If i Mod 1000 = 0 Then DoEvents 
+#End If 
+Next i 
+ApplyVenomStyling = result 
+Exit Function 
+ErrorHandler: 
+ApplyVenomStyling = codeText ' Return original on error 
+LogMessage "Error applying VENOM styling: " & Err.description, "ERROR" End Function 
+' Mac-optimized version with chunking for better performance #If Mac Then 
+Private Function ApplyVenomStylingMac(codeText As String) As String ' Reset timeout timer 
+ResetMacProcessingTimer 
+' Process code in chunks if it's large 
+If Len(codeText) > MAC_CHUNK_SIZE Then 
+LogMessage "Processing large code file in chunks on Mac", "INFO"
+' For very large files, use a simplified approach 
+' that just adds VENOM headers without complex processing 
+' Check if this is a module (has attribute line) 
+If InStr(1, codeText, "Attribute VB_Name = """) > 0 Then 
+' Extract module name 
+Dim moduleName As String 
+Dim startPos As Long, endPos As Long 
+startPos = InStr(1, codeText, "Attribute VB_Name = """) + 20 endPos = InStr(startPos, codeText, """") 
+If startPos > 0 And endPos > startPos Then 
+moduleName = Mid(codeText, startPos, endPos - startPos) 
+' Create a VENOM header to prepend 
+Dim venomHeader As String 
+venomHeader = "Attribute VB_Name = """ & moduleName &  
+"""" & vbCrLf & _ 
+"'  
+****************************************************************************"  & vbCrLf & _ 
+"' * " &  
+UCase(moduleName) & " (VENOMized) " & String(20 - Len(moduleName), " ") & "*" & vbCrLf & _ 
+"' * Striking with precision,  
+executing with deadly efficiency *" & vbCrLf & _ "'  
+* 
+*" & vbCrLf & _ 
+"' * Version: 2.1 Enhanced with  
+VENOM *" & vbCrLf & _ "' * Last Updated: " & format(Now, "yyyy-mm 
+dd") & " *" & vbCrLf & _ "' * Author: Aaron  
+McCutchins *" &  vbCrLf & _ 
+"'  
+****************************************************************************"  & vbCrLf 
+' Replace the original header with the VENOM header 
+Dim origHeaderEnd As Long 
+origHeaderEnd = InStr(endPos + 2, codeText, "Option  
+Explicit") 
+If origHeaderEnd > 0 Then 
+' Get the code after the original header 
+Dim codeAfterHeader As String 
+codeAfterHeader = Mid(codeText, origHeaderEnd) 
+' Return the combined result 
+ApplyVenomStylingMac = venomHeader & codeAfterHeader 
+Else
+' Keep the code as is if we can't find a good  
+insertion point 
+ApplyVenomStylingMac = codeText 
+End If 
+Else 
+ApplyVenomStylingMac = codeText 
+End If 
+Else 
+' Not a module or couldn't parse, return as is 
+ApplyVenomStylingMac = codeText 
+End If 
+Else 
+' Small enough to process normally 
+ApplyVenomStylingMac = ApplyVenomStyling(codeText) 
+End If 
+' Keep UI responsive 
+DoEvents 
+End Function 
+#End If 
+' Calculate similarity score between two modules 
+Private Function CalculateSimilarityScore(Module1 As Object, Module2 As  Object) As Integer 
+On Error GoTo ErrorHandler 
+' Simple implementation - compare procedure count similarity Dim proc1Count As Integer, proc2Count As Integer 
+proc1Count = Module1("Procedures").count 
+proc2Count = Module2("Procedures").count 
+Dim smallerCount As Integer, largerCount As Integer 
+smallerCount = IIf(proc1Count < proc2Count, proc1Count, proc2Count) largerCount = IIf(proc1Count > proc2Count, proc1Count, proc2Count) 
+' Calculate similarity as percentage 
+If largerCount = 0 Then 
+CalculateSimilarityScore = 100 ' Both empty = 100% similar Else 
+CalculateSimilarityScore = Int((smallerCount / largerCount) * 100) End If 
+Exit Function 
+ErrorHandler: 
+CalculateSimilarityScore = 50 ' Default to 50% similarity on error LogMessage "Error calculating similarity score: " & Err.description,  "ERROR" 
+End Function 
+Private Function AssessProcedureComplexity(proc1 As Object, proc2 As Object)  As String 
+On Error Resume Next
+' Attempt to get procedure code 
+Dim proc1Code As String, proc2Code As String 
+proc1Code = GetProcedureCode(proc1) 
+proc2Code = GetProcedureCode(proc2) 
+' If failed to get source code, return default 
+If proc1Code = "" Or proc2Code = "" Then 
+AssessProcedureComplexity = "Comparable" 
+Exit Function 
+End If 
+' Calculate metrics for comparison 
+Dim proc1Lines As Long, proc2Lines As Long 
+Dim proc1Complexity As Double, proc2Complexity As Double 
+proc1Lines = UBound(Split(proc1Code, vbCrLf)) + 1 
+proc2Lines = UBound(Split(proc2Code, vbCrLf)) + 1 
+' Calculate approximate cyclomatic complexity by counting control  structures 
+proc1Complexity = CalculateApproxComplexity(proc1Code) 
+proc2Complexity = CalculateApproxComplexity(proc2Code) 
+' Determine which procedure is more complex 
+Dim lineRatio As Double, complexityRatio As Double 
+' Avoid division by zero 
+If proc1Lines = 0 Then proc1Lines = 1 
+If proc2Lines = 0 Then proc2Lines = 1 
+If proc1Complexity = 0 Then proc1Complexity = 1 
+If proc2Complexity = 0 Then proc2Complexity = 1 
+lineRatio = proc1Lines / proc2Lines 
+complexityRatio = proc1Complexity / proc2Complexity 
+' Make the assessment based on both metrics 
+If lineRatio > 1.5 And complexityRatio > 1.5 Then 
+AssessProcedureComplexity = "More Complex" 
+ElseIf lineRatio < 0.75 And complexityRatio < 0.75 Then AssessProcedureComplexity = "Less Complex" 
+Else 
+AssessProcedureComplexity = "Comparable" 
+End If 
+On Error GoTo 0 
+End Function 
+' Helper function to calculate approximate cyclomatic complexity Private Function CalculateApproxComplexity(procCode As String) As Double Dim complexity As Double 
+complexity = 1 ' Base complexity 
+' Count control structures that add to complexity
+complexity = complexity + CountOccurrences(procCode, "If ") complexity = complexity + CountOccurrences(procCode, "ElseIf ") complexity = complexity + CountOccurrences(procCode, "Case ") complexity = complexity + CountOccurrences(procCode, "For ") complexity = complexity + CountOccurrences(procCode, "While ") complexity = complexity + CountOccurrences(procCode, "Do Until ") complexity = complexity + CountOccurrences(procCode, "Do While ") 
+CalculateApproxComplexity = complexity 
+End Function 
+' Count occurrences of a substring in a string 
+Private Function CountOccurrences(source As String, pattern As String) As  Long 
+Dim count As Long 
+Dim pos As Long 
+pos = InStr(1, source, pattern, vbTextCompare) 
+While pos > 0 
+count = count + 1 
+pos = InStr(pos + 1, source, pattern, vbTextCompare) 
+Wend 
+CountOccurrences = count 
+End Function 
+' Extract procedure code from object 
+Private Function GetProcedureCode(procInfo As Object) As String On Error Resume Next 
+' This is a placeholder implementation as we don't have access to the  full document 
+' In a real implementation, we would extract the procedure code from the  document 
+' using the LineStart and LineEnd properties of the procedure info 
+Dim module As Object 
+If typeName(procInfo("Module")) = "String" Then 
+' Try to find the module in the current document 
+' This is simplified and might need more complex logic in reality 
+' Return empty string if we can't extract code 
+GetProcedureCode = "" 
+End If 
+' If we had full document access: 
+' Dim docLines As Variant 
+' docLines = Split(GetDocumentText(), vbCrLf) 
+' GetProcedureCode = Join(Mid(docLines, procInfo("LineStart"),  procInfo("LineEnd") - procInfo("LineStart") + 1), vbCrLf) 
+On Error GoTo 0 
+End Function
